@@ -15,3 +15,7 @@ description = "File diff using the patience diff algorithm: a MoonBit port of Ja
 source = "src"
 
 preferred_target = "native"
+
+import {
+  "moonbitlang/async@0.22.7",
+}

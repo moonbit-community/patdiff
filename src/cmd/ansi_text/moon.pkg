@@ -1,4 +1,5 @@
 import {
+  "moonbitlang/async",
   "moonbit-community/patdiff/ansi_text" @text,
   "moonbit-community/patdiff/internal/bstr",
   "moonbit-community/patdiff/sys",
@@ -7,4 +8,4 @@ import {
 
 pkgtype(kind: "executable")
 
-supported_targets = "+native"
+supported_targets = "native+wasm"

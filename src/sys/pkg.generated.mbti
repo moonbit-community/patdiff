@@ -8,27 +8,27 @@ import {
 // Values
 pub fn console_width() -> Int32?
 
-pub fn exit(Int32) -> Unit
+pub async fn exit(Int32) -> Unit noraise
 
-pub fn flush_stdout() -> Unit
+pub async fn flush() -> Unit noraise
 
 pub fn print_stderr(Bytes) -> Unit
 
 pub fn print_stdout(Bytes) -> Unit
 
-pub fn read_dir(Bytes) -> Array[Bytes] raise SysError
+pub async fn read_dir(Bytes) -> Array[Bytes] raise SysError
 
-pub fn read_file(Bytes) -> Bytes raise SysError
+pub async fn read_file(Bytes) -> Bytes raise SysError
 
-pub fn read_stdin() -> Bytes raise SysError
+pub async fn read_stdin() -> Bytes raise SysError
 
-pub fn stat(Bytes) -> Stat? raise SysError
+pub async fn stat(Bytes) -> Stat? raise SysError
 
-pub fn temp_file(Bytes, Bytes, Bytes, Bytes) -> Bytes raise SysError
+pub async fn temp_file(Bytes, Bytes, Bytes, Bytes) -> Bytes raise SysError
 
-pub fn unlink(Bytes) -> Unit
+pub async fn unlink(Bytes) -> Unit noraise
 
-pub fn write_file(Bytes, Bytes) -> Unit raise SysError
+pub async fn write_file(Bytes, Bytes) -> Unit raise SysError
 
 // Errors
 pub(all) suberror SysError {
@@ -37,11 +37,12 @@ pub(all) suberror SysError {
 pub impl Show for SysError
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum FileKind {
   Regular
   Directory
   OtherKind
-} derive(Eq, @debug.Debug)
+}
 
 pub(all) struct Stat {
   kind : FileKind

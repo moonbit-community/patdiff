@@ -7,21 +7,21 @@ import {
 }
 
 // Values
-pub fn compare_files(@kernel.Configuration, prev_file~ : @kernel.FileName, next_file~ : @kernel.FileName) -> @kernel.ComparisonResult raise @sys.SysError
+pub async fn compare_files(@kernel.Configuration, prev_file~ : @kernel.FileName, next_file~ : @kernel.FileName) -> @kernel.ComparisonResult raise @sys.SysError
 
-pub fn diff_dirs(@kernel.Configuration, prev_dir~ : Bytes, next_dir~ : Bytes, file_filter~ : ((Bytes, @sys.Stat) -> Bool)?) -> Bool raise
+pub async fn diff_dirs(@kernel.Configuration, prev_dir~ : Bytes, next_dir~ : Bytes, file_filter~ : ((Bytes, @sys.Stat) -> Bool)?) -> Bool
 
-pub fn diff_files(@kernel.Configuration, prev_file~ : Bytes, next_file~ : Bytes) -> Bool raise @sys.SysError
+pub async fn diff_files(@kernel.Configuration, prev_file~ : Bytes, next_file~ : Bytes) -> Bool raise @sys.SysError
 
-pub fn get_config(filename? : Bytes) -> @kernel.Configuration
+pub async fn get_config(filename? : Bytes) -> @kernel.Configuration
 
-pub fn load_config(Bytes) -> @kernel.Configuration?
+pub async fn load_config(Bytes) -> @kernel.Configuration?
 
-pub fn platform() -> @kernel.Platform
+pub async fn platform(ArrayView[@kernel.FileName]) -> @kernel.Platform noraise
 
-pub fn print_result(@kernel.ComparisonResult, file_names~ : (@kernel.FileName, @kernel.FileName), config~ : @kernel.Configuration) -> Unit raise @sys.SysError
+pub async fn print_result(@kernel.ComparisonResult, file_names~ : (@kernel.FileName, @kernel.FileName), config~ : @kernel.Configuration) -> Unit raise @sys.SysError
 
-pub fn save_default(Bytes) -> Unit raise @sys.SysError
+pub async fn save_default(Bytes) -> Unit raise @sys.SysError
 
 // Errors
 pub(all) suberror Failure {

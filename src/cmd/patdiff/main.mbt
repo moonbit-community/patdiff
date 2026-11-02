@@ -273,7 +273,7 @@ fn parse_percent(value : String) -> Double? {
 
 ///|
 /// Splits diff-like text from stdin into the two files it describes.
-fn files_from_stdin() -> (Bytes, Bytes) raise {
+async fn files_from_stdin() -> (Bytes, Bytes) {
   let prev = Buffer()
   let next = Buffer()
   let add_prefixes = [b"+", b">"]
@@ -327,10 +327,10 @@ fn output_flag(args : ParsedArgs) -> @kernel.Output? raise UsageError {
 }
 
 ///|
-fn make_config(file : Bytes) -> Int32 raise {
+async fn make_config(file : Bytes) -> Int32 {
   let should_write = if @sys.stat(file) is Some(_) {
     @sys.print_stdout(file + b" already exists. Overwrite? (y/n) ")
-    @sys.flush_stdout()
+    @sys.flush()
     let lines = @bstr.split_lines(@sys.read_stdin())
     let response = @bstr.to_string(lines.get(0).unwrap_or(b"")).to_lower()
     response == "yes" || response == "y"
@@ -453,12 +453,22 @@ fn override_config(
 }
 
 ///|
-fn compare_main(
+async fn exists(file : Bytes) -> Bool {
+  @sys.stat(file) is Some(_)
+}
+
+///|
+async fn is_dir(file : Bytes) -> Bool {
+  @sys.stat(file) is Some({ kind: Directory, .. })
+}
+
+///|
+async fn compare_main(
   args : ParsedArgs,
   prev_file : Bytes,
   next_file : Bytes,
   output~ : @kernel.Output?,
-) -> Int32 raise {
+) -> Int32 {
   let filename = if args.has("default") {
     if args.has("file") {
       raise @lib.Failure("Cannot pass both [-default] and [-file]")
@@ -469,10 +479,6 @@ fn compare_main(
   }
   let config = @lib.get_config(filename?)
   let config = override_config(config, args, output~)
-  let exists = fn(file : Bytes) raise { @sys.stat(file) is Some(_) }
-  let is_dir = fn(file : Bytes) raise {
-    @sys.stat(file) is Some({ kind: Directory, .. })
-  }
   let shown = (file : Bytes) => @bstr.to_string(file)
   let prev_exists = exists(prev_file)
   let next_exists = exists(next_file)
@@ -543,7 +549,7 @@ fn compare_main(
 }
 
 ///|
-fn run(argv : ArrayView[String]) -> Int32 raise {
+async fn run(argv : ArrayView[String]) -> Int32 {
   let args = parse_args(argv)
   if args.has("help") {
     @sys.print_stdout(@bstr.of_string(usage()))
@@ -571,14 +577,19 @@ fn run(argv : ArrayView[String]) -> Int32 raise {
   } else {
     (prev_file, next_file)
   }
-  let cleanup = () => {
-    if temporary {
-      @sys.unlink(prev_file)
-      @sys.unlink(next_file)
-    }
+  let result = try compare_main(args, first, second, output~) catch {
+    err => Err(err)
+  } noraise {
+    code => Ok(code)
   }
-  defer cleanup()
-  compare_main(args, first, second, output~)
+  if temporary {
+    @sys.unlink(prev_file)
+    @sys.unlink(next_file)
+  }
+  match result {
+    Ok(code) => code
+    Err(err) => raise err
+  }
 }
 
 ///|
@@ -596,7 +607,7 @@ fn describe_error(err : Error) -> String {
 }
 
 ///|
-fn main {
+async fn main {
   let argv = @env.args()
   let code = run(argv[1:]) catch {
     UsageError(msg) => {

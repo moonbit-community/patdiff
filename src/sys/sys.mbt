@@ -11,122 +11,108 @@ pub impl Show for SysError with fn output(self, logger) {
 }
 
 ///|
-#borrow(path, err)
-extern "C" fn patdiff_read_file(path : Bytes, err : FixedArray[Int32]) -> Bytes = "patdiff_read_file"
+fn sys_error(path : Bytes, err : Error) -> SysError {
+  let reason = match err {
+    @os_error.OSError(code, ..) => @os_error.errno_to_string(code)
+    err => err.to_string()
+  }
+  SysError("\{@bstr.to_string(path)}: \{reason}")
+}
 
 ///|
-#borrow(err)
-extern "C" fn patdiff_read_stdin(err : FixedArray[Int32]) -> Bytes = "patdiff_read_stdin"
-
-///|
-#borrow(data)
-extern "C" fn patdiff_write_fd(fd : Int32, data : Bytes) -> Int32 = "patdiff_write_fd"
-
-///|
-#borrow(path, data)
-extern "C" fn patdiff_write_file(path : Bytes, data : Bytes) -> Int32 = "patdiff_write_file"
-
-///|
-#borrow(path, mtime)
-extern "C" fn patdiff_stat(path : Bytes, mtime : FixedArray[Double]) -> Int32 = "patdiff_stat"
-
-///|
-#borrow(path, err)
-extern "C" fn patdiff_read_dir(path : Bytes, err : FixedArray[Int32]) -> Bytes = "patdiff_read_dir"
-
-///|
-extern "C" fn patdiff_console_width() -> Int32 = "patdiff_console_width"
-
-///|
-#borrow(template, data)
-extern "C" fn patdiff_temp_file(
-  template : FixedArray[Byte],
-  suffix_len : Int32,
-  data : Bytes,
-) -> Int32 = "patdiff_temp_file"
-
-///|
-#borrow(path)
-extern "C" fn patdiff_unlink(path : Bytes) -> Unit = "patdiff_unlink"
-
-///|
-extern "C" fn patdiff_exit(code : Int32) -> Unit = "patdiff_exit"
-
-///|
-extern "C" fn patdiff_strerror(code : Int32) -> Bytes = "patdiff_strerror"
-
-///|
-fn sys_error(path : Bytes, code : Int32) -> SysError {
-  SysError(
-    "\{@bstr.to_string(path)}: \{@bstr.to_string(patdiff_strerror(code))}",
-  )
+/// File names are bytes, but the file system API takes strings, so only file
+/// names in UTF-8 can be used.
+fn path_string(path : Bytes) -> String raise SysError {
+  @utf8.decode(path) catch {
+    _ => raise SysError("\{@bstr.to_string(path)}: file name is not UTF-8")
+  }
 }
 
 ///|
 /// The contents of a file. Works on anything readable, such as a pipe.
-pub fn read_file(path : Bytes) -> Bytes raise SysError {
-  let err : FixedArray[Int32] = [0]
-  let contents = patdiff_read_file(path, err)
-  if err[0] != 0 {
-    raise sys_error(path, err[0])
-  }
-  contents
-}
-
-///|
-pub fn read_stdin() -> Bytes raise SysError {
-  let err : FixedArray[Int32] = [0]
-  let contents = patdiff_read_stdin(err)
-  if err[0] != 0 {
-    raise sys_error(b"<stdin>", err[0])
-  }
-  contents
-}
-
-///|
-pub fn write_file(path : Bytes, data : Bytes) -> Unit raise SysError {
-  let code = patdiff_write_file(path, data)
-  if code != 0 {
-    raise sys_error(path, code)
+pub async fn read_file(path : Bytes) -> Bytes raise SysError {
+  let name = path_string(path)
+  @fs.read_file(name).binary() catch {
+    err => raise sys_error(path, err)
   }
 }
 
 ///|
-let stdout_buffer : Buffer = Buffer()
+pub async fn read_stdin() -> Bytes raise SysError {
+  @stdio.stdin.read_all().binary() catch {
+    err => raise sys_error(b"<stdin>", err)
+  }
+}
 
 ///|
-/// Buffered until `flush_stdout`.
+pub async fn write_file(path : Bytes, data : Bytes) -> Unit raise SysError {
+  let name = path_string(path)
+  @fs.write_file(name, data, create_mode=CreateOrTruncate) catch {
+    err => raise sys_error(path, err)
+  }
+}
+
+///|
+/// What has been printed but not yet written, in the order it was printed.
+priv enum Pending {
+  Stdout(Bytes)
+  Stderr(Bytes)
+}
+
+///|
+let pending : Array[Pending] = []
+
+///|
+/// Kept until `flush`.
 pub fn print_stdout(data : Bytes) -> Unit {
-  stdout_buffer.write_bytes(data)
-  if stdout_buffer.length() >= 65536 {
-    flush_stdout()
+  pending.push(Stdout(data))
+}
+
+///|
+/// Kept until `flush`, but then written before anything for stdout, as it would
+/// be if stderr were unbuffered and stdout buffered.
+pub fn print_stderr(data : Bytes) -> Unit {
+  pending.push(Stderr(data))
+}
+
+///|
+pub async fn flush() -> Unit noraise {
+  let stdout = Buffer()
+  let stderr = Buffer()
+  for chunk in pending {
+    match chunk {
+      Stdout(data) => stdout.write_bytes(data)
+      Stderr(data) => stderr.write_bytes(data)
+    }
+  }
+  pending.clear()
+  // Output that can't be written, as into a closed pipe, is dropped.
+  if stderr.length() > 0 {
+    @stdio.stderr.write(stderr.contents()) catch {
+      _ => ()
+    }
+  }
+  if stdout.length() > 0 {
+    @stdio.stdout.write(stdout.contents()) catch {
+      _ => ()
+    }
   }
 }
 
 ///|
-pub fn flush_stdout() -> Unit {
-  let _ = patdiff_write_fd(1, stdout_buffer.contents())
-  stdout_buffer.reset()
+/// Flushes the output and ends the process.
+pub async fn exit(code : Int32) -> Unit noraise {
+  flush()
+  process_exit(code)
 }
 
 ///|
-pub fn print_stderr(data : Bytes) -> Unit {
-  let _ = patdiff_write_fd(2, data)
-}
-
-///|
-/// Flushes stdout and ends the process.
-pub fn exit(code : Int32) -> Unit {
-  flush_stdout()
-  patdiff_exit(code)
-}
-
-///|
+#derive(Debug, Eq)
 pub(all) enum FileKind {
   Regular
   Directory
   OtherKind
-} derive(Debug, Eq)
+}
 
 ///|
 pub(all) struct Stat {
@@ -136,39 +122,46 @@ pub(all) struct Stat {
 }
 
 ///|
-/// Follows symlinks. `None` when the path doesn't exist.
-pub fn stat(path : Bytes) -> Stat? raise SysError {
-  let mtime : FixedArray[Double] = [0.0]
-  let code = patdiff_stat(path, mtime)
-  if code < 0 {
-    raise sys_error(path, -code)
-  }
-  match code {
-    0 => None
-    1 => Some({ kind: Regular, mtime: mtime[0], })
-    2 => Some({ kind: Directory, mtime: mtime[0], })
-    _ => Some({ kind: OtherKind, mtime: mtime[0], })
+fn is_missing(err : Error) -> Bool {
+  match err {
+    @os_error.OSError(_) as err => err.is_ENOENT() || err.is_ENOTDIR()
+    _ => false
   }
 }
 
 ///|
-/// The entries of a directory, except `.` and `..`.
-pub fn read_dir(path : Bytes) -> Array[Bytes] raise SysError {
-  let err : FixedArray[Int32] = [0]
-  let listing = patdiff_read_dir(path, err)
-  if err[0] != 0 {
-    raise sys_error(path, err[0])
+/// Follows symlinks. `None` when the path doesn't exist.
+pub async fn stat(path : Bytes) -> Stat? raise SysError {
+  let name = path_string(path)
+  let (kind, (seconds, nanoseconds)) = (
+    @fs.kind(name, follow_symlink=true),
+    @fs.mtime(name, follow_symlink=true),
+  ) catch {
+    err if is_missing(err) => return None
+    err => raise sys_error(path, err)
   }
-  let names = @bstr.split_on(listing, 0)
-  // Every name ends with a NUL, so what follows the last one is empty.
-  let _ = names.pop()
-  names
+  let kind : FileKind = match kind {
+    Regular => Regular
+    Directory => Directory
+    _ => OtherKind
+  }
+  Some({ kind, mtime: seconds.to_double() + nanoseconds.to_double() / 1.0e9, })
+}
+
+///|
+/// The entries of a directory, except `.` and `..`.
+pub async fn read_dir(path : Bytes) -> Array[Bytes] raise SysError {
+  let name = path_string(path)
+  let names = @fs.readdir(name, include_hidden=true) catch {
+    err => raise sys_error(path, err)
+  }
+  names.map(name => @utf8.encode(name))
 }
 
 ///|
 /// The width of the terminal, when there is one.
 pub fn console_width() -> Int32? {
-  let width = patdiff_console_width()
+  let width = terminal_width()
   if width < 0 {
     None
   } else {
@@ -177,24 +170,51 @@ pub fn console_width() -> Int32? {
 }
 
 ///|
+let temp_names : Ref[UInt32] = Ref::{ val: 0, }
+
+///|
+/// Six characters for the name of a temporary file, different on each call.
+fn temp_name() -> Bytes {
+  let chars = b"abcdefghijklmnopqrstuvwxyz0123456789"
+  temp_names.val += 1
+  // A linear congruential step from the clock and a counter.
+  let mut state = @async.now().reinterpret_as_uint64().to_uint() * 2654435761U +
+    temp_names.val * 40503
+  Bytes::makei(6, _ => {
+    state = state * 1664525U + 1013904223U
+    chars[((state >> 16) % chars.length().reinterpret_as_uint()).reinterpret_as_int()]
+  })
+}
+
+///|
 /// Creates a new file holding `data`, with a generated name.
-pub fn temp_file(
+pub async fn temp_file(
   dir : Bytes,
   prefix : Bytes,
   suffix : Bytes,
   data : Bytes,
 ) -> Bytes raise SysError {
-  let path = dir + b"/" + prefix + b"XXXXXX" + suffix + b"\x00"
-  let template = path.to_fixedarray()
-  let code = patdiff_temp_file(template, suffix.length(), data)
-  if code != 0 {
-    raise sys_error(path[:path.length() - 1].to_owned(), code)
+  for attempt = 0; ; attempt = attempt + 1 {
+    let path = dir + b"/" + prefix + temp_name() + suffix
+    let name = path_string(path)
+    let file = @fs.create(name, permission=0o600) catch {
+      @os_error.OSError(_) as err if attempt < 100 && err.is_EEXIST() =>
+        continue
+      err => raise sys_error(path, err)
+    }
+    defer file.close()
+    file.write(data) catch {
+      err => raise sys_error(path, err)
+    }
+    return path
   }
-  Bytes::from_array(template[:template.length() - 1])
 }
 
 ///|
 /// Removes a file, ignoring any failure.
-pub fn unlink(path : Bytes) -> Unit {
-  patdiff_unlink(path)
+pub async fn unlink(path : Bytes) -> Unit noraise {
+  let name = path_string(path) catch { _ => return }
+  @fs.remove(name) catch {
+    _ => ()
+  }
 }

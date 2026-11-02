@@ -11,18 +11,26 @@ pub impl Show for Failure with fn output(self, logger) {
 }
 
 ///|
-/// The platform of the patdiff executable.
-pub fn platform() -> @kernel.Platform {
+/// The platform of the patdiff executable. The modification times of `files`
+/// are looked up now, as printing can't wait for them.
+pub async fn platform(
+  files : ArrayView[@kernel.FileName],
+) -> @kernel.Platform noraise {
+  let mtimes : Map[Bytes, Double] = Map([])
+  for file in files {
+    if file is Real(real_name~, ..) {
+      try @sys.stat(real_name) catch {
+        _ => ()
+      } noraise {
+        stat => if stat is Some(stat) { mtimes[real_name] = stat.mtime }
+      }
+    }
+  }
   {
     mtime: file => {
-      let path = match file {
-        Real(real_name~, ..) => real_name
-        Fake(_) => return None
-      }
-      try @sys.stat(path) catch {
-        _ => None
-      } noraise {
-        stat => stat.map(stat => stat.mtime)
+      match file {
+        Real(real_name~, ..) => mtimes.get(real_name)
+        Fake(_) => None
       }
     },
     console_width: @sys.console_width,
@@ -43,7 +51,7 @@ fn print_string(line : Bytes) -> Unit {
 
 ///|
 /// Hunks ready to be printed.
-pub fn compare_files(
+pub async fn compare_files(
   config : @kernel.Configuration,
   prev_file~ : @kernel.FileName,
   next_file~ : @kernel.FileName,
@@ -72,7 +80,7 @@ pub fn compare_files(
 
 ///|
 /// Print hunks to stdout.
-pub fn print_result(
+pub async fn print_result(
   hunks : @kernel.ComparisonResult,
   file_names~ : (@kernel.FileName, @kernel.FileName),
   config~ : @kernel.Configuration,
@@ -99,7 +107,8 @@ pub fn print_result(
             next_is_binary~,
           ),
         )
-      Hunks(hunks) =>
+      Hunks(hunks) => {
+        let platform = platform([prev_file, next_file])
         @kernel.print_unified(
           hunks,
           file_names~,
@@ -107,9 +116,11 @@ pub fn print_result(
           rules=config.rules,
           location_style=config.location_style,
           print=print_line,
-          platform=platform(),
+          platform~,
         )
-      StructuredHunks(hunks) =>
+      }
+      StructuredHunks(hunks) => {
+        let platform = platform([prev_file, next_file])
         @kernel.print_side_by_side(
           width_override?=config.width_override,
           hunks,
@@ -118,14 +129,16 @@ pub fn print_result(
           wrap_or_truncate=config.side_by_side.unwrap_or(Wrap),
           output=config.output,
           print=print_line,
-          platform=platform(),
+          platform~,
         )
+      }
     }
   }
+  @sys.flush()
 }
 
 ///|
-fn diff_files_internal(
+async fn diff_files_internal(
   config : @kernel.Configuration,
   prev_file~ : @kernel.FileName,
   next_file~ : @kernel.FileName,
@@ -149,7 +162,7 @@ fn with_alt(
 
 ///|
 /// Compares and prints two files, returning whether they differ.
-pub fn diff_files(
+pub async fn diff_files(
   config : @kernel.Configuration,
   prev_file~ : Bytes,
   next_file~ : Bytes,
@@ -159,7 +172,7 @@ pub fn diff_files(
 }
 
 ///|
-fn has_kind(
+async fn has_kind(
   file : @kernel.FileName,
   kind : @sys.FileKind,
 ) -> Bool raise @sys.SysError {
@@ -170,7 +183,7 @@ fn has_kind(
 /// Sorted entries of `dir` for which `file_filter` holds. A file which
 /// disappeared during listing counts as not existing. That matters when the file
 /// is excluded, because we don't want to create noise for excluded files.
-fn set_of_dir(
+async fn set_of_dir(
   dir : @kernel.FileName,
   file_filter : ((Bytes, @sys.Stat) -> Bool)?,
 ) -> Array[Bytes] raise @sys.SysError {
@@ -190,7 +203,7 @@ fn set_of_dir(
 }
 
 ///|
-fn diff_dirs_internal(
+async fn diff_dirs_internal(
   config : @kernel.Configuration,
   prev_dir~ : @kernel.FileName,
   next_dir~ : @kernel.FileName,
@@ -200,7 +213,7 @@ fn diff_dirs_internal(
   let next_set = set_of_dir(next_dir, file_filter)
   let prev_uniques = prev_set.filter(name => !next_set.contains(name))
   let next_uniques = next_set.filter(name => !prev_set.contains(name))
-  let handle_unique = fn(
+  async fn handle_unique(
     file : Bytes,
     dir : @kernel.FileName,
     is_prev : Bool,
@@ -268,12 +281,12 @@ fn diff_dirs_internal(
 ///|
 /// Compares and prints two directories, returning whether they differ.
 /// `file_filter` is given the path and stat of each entry.
-pub fn diff_dirs(
+pub async fn diff_dirs(
   config : @kernel.Configuration,
   prev_dir~ : Bytes,
   next_dir~ : Bytes,
   file_filter~ : ((Bytes, @sys.Stat) -> Bool)?,
-) -> Bool raise {
+) -> Bool {
   let (prev_dir, next_dir) = with_alt(config, prev=prev_dir, next=next_dir)
   if !has_kind(prev_dir, Directory) {
     raise Failure(
@@ -289,10 +302,10 @@ pub fn diff_dirs(
 }
 
 ///|
-fn load_exn(
+async fn load_exn(
   config_file : Bytes,
   seen~ : Array[Bytes],
-) -> @kernel.Configuration raise {
+) -> @kernel.Configuration {
   let sexp = @sexp.Sexp::parse(@sys.read_file(config_file))
   let (config, version) = @kernel.OnDisk::of_sexp_versioned(sexp)
   // Offer an upgraded copy of a configuration in an old format.
@@ -320,7 +333,7 @@ fn load_exn(
 
 ///|
 /// Loads a configuration file, reporting problems on stderr.
-pub fn load_config(config_file : Bytes) -> @kernel.Configuration? {
+pub async fn load_config(config_file : Bytes) -> @kernel.Configuration? {
   try load_exn(config_file, seen=[]) catch {
     err => {
       @sys.print_stderr(
@@ -340,7 +353,7 @@ pub fn load_config(config_file : Bytes) -> @kernel.Configuration? {
 ///|
 /// The configuration in the given file, or in `~/.patdiff` if that exists, or the
 /// default one. An empty `filename` means to use the default.
-pub fn get_config(filename? : Bytes) -> @kernel.Configuration {
+pub async fn get_config(filename? : Bytes) -> @kernel.Configuration {
   let file = match filename {
     Some(file) if file.is_empty() => None
     Some(file) => Some(file)
@@ -357,11 +370,15 @@ pub fn get_config(filename? : Bytes) -> @kernel.Configuration {
         }
       }
   }
-  file.bind(load_config).unwrap_or(@kernel.Configuration::default())
+  let config = match file {
+    Some(file) => load_config(file)
+    None => None
+  }
+  config.unwrap_or(@kernel.Configuration::default())
 }
 
 ///|
 /// Writes the default configuration file.
-pub fn save_default(filename : Bytes) -> Unit raise @sys.SysError {
+pub async fn save_default(filename : Bytes) -> Unit raise @sys.SysError {
   @sys.write_file(filename, @kernel.default_config_string())
 }

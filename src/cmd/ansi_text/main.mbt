@@ -10,7 +10,7 @@ const USAGE =
   #|
 
 ///|
-fn run(args : ArrayView[String]) -> Int32 raise {
+async fn run(args : ArrayView[String]) -> Int32 {
   // Each line is transformed on its own, so a line's styles don't depend on the
   // lines before it.
   let transform : ((Bytes) -> Bytes)? = match args {
@@ -36,7 +36,7 @@ fn run(args : ArrayView[String]) -> Int32 raise {
 }
 
 ///|
-fn main {
+async fn main {
   let argv = @env.args()
   let code = run(argv[1:]) catch {
     err => {

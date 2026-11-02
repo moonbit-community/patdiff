@@ -36,8 +36,11 @@ jobs:
           git diff --exit-code
           moon check
           moon test
+          moon test --target wasm
           moon build --release
           python3 test/cli/run_cram.py
+          moon build --release --target wasm
+          python3 test/cli/run_cram.py --target wasm
           version="$(sed -n 's/^version = "\(.*\)"/\1/p' moon.mod)"
           if [[ -z "$version" ]]; then
             echo "could not read package version from moon.mod" >&2

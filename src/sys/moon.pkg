@@ -1,11 +1,17 @@
 import {
   "moonbit-community/patdiff/internal/bstr",
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/os_error",
+  "moonbitlang/async/stdio",
+  "moonbitlang/core/encoding/utf8",
 }
 
-warnings = "-79"
+warnings = "-79-14"
 
 options(
   "native-stub": [ "stub.c" ],
+  targets: { "native.mbt": [ "native" ], "wasm.mbt": [ "wasm" ] },
 )
 
-supported_targets = "+native"
+supported_targets = "native+wasm"

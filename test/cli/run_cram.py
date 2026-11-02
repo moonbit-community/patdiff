@@ -6,6 +6,9 @@ output expected of them, with a `  [N]` line for a non-zero exit code. All the
 commands of a file run in one shell, in a new temporary directory.
 
 Usage: moon build --release && python3 test/cli/run_cram.py [file.t ...]
+
+With `--target wasm`, the Wasm build (`moon build --release --target wasm`) is
+run with moonrun instead.
 """
 import os
 import re
@@ -16,7 +19,7 @@ import sys
 import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-BUILD = os.path.join(ROOT, "_build/native/release/build/cmd")
+TARGET = "native"
 MARKER = "@@CRAM-MARKER@@"
 
 
@@ -41,8 +44,15 @@ def parse(path):
 def make_bin_dir(tmp):
     bin_dir = os.path.join(tmp, ".bin")
     os.mkdir(bin_dir)
+    build = os.path.join(ROOT, f"_build/{TARGET}/release/build/cmd")
     for name in ["patdiff", "ansi_text"]:
-        os.symlink(os.path.join(BUILD, name, name + ".exe"), os.path.join(bin_dir, name))
+        if TARGET == "wasm":
+            program = os.path.join(bin_dir, name)
+            with open(program, "w") as f:
+                f.write(f'#!/bin/sh\nexec moonrun "{os.path.join(build, name, name + ".wasm")}" "$@"\n')
+            os.chmod(program, os.stat(program).st_mode | stat.S_IEXEC)
+        else:
+            os.symlink(os.path.join(build, name, name + ".exe"), os.path.join(bin_dir, name))
     wrapper = os.path.join(ROOT, "scripts/patdiff-git-wrapper")
     if os.path.exists(wrapper):
         shutil.copy(wrapper, os.path.join(bin_dir, "patdiff-git-wrapper"))
@@ -112,7 +122,11 @@ def run(path):
 
 
 def main():
+    global TARGET
     files = sys.argv[1:]
+    if files[:1] == ["--target"]:
+        TARGET = files[1]
+        files = files[2:]
     if not files:
         cram = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cram")
         files = sorted(os.path.join(cram, f) for f in os.listdir(cram) if f.endswith(".t"))

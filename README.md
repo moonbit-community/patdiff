@@ -10,7 +10,20 @@ The port follows upstream at `v0.18~preview.130.106+341`, together with the
 
 ## Command line
 
-The native build gives a `patdiff` executable, with upstream's flags:
+`patdiff` takes upstream's flags. It builds for native and for Wasm. To run the
+published Wasm build without installing anything:
+
+```bash
+moonx moonbit-community/patdiff/cmd/patdiff old.txt new.txt
+```
+
+To install the native build:
+
+```bash
+moon install moonbit-community/patdiff/cmd/patdiff
+```
+
+Or, from a checkout:
 
 ```bash
 moon build --release
@@ -50,9 +63,12 @@ let diff : Bytes = @kernel.patdiff(
 | `ansi_text` | Parsing and manipulating text with ANSI escape codes |
 | `kernel` | Refinement, moves, rendering and configuration; no I/O |
 | `sexp` | S-expressions, for configuration files |
-| `sys` | Native bindings for files and the terminal |
-| `lib` | Comparing files and directories, loading configuration; native only |
-| `cmd/patdiff`, `cmd/ansi_text` | The executables; native only |
+| `sys` | Files, standard streams and the terminal, on `moonbitlang/async` |
+| `lib` | Comparing files and directories, loading configuration |
+| `cmd/patdiff`, `cmd/ansi_text` | The executables |
+
+`sys`, `lib` and the executables do I/O through `moonbitlang/async`, so they build
+for native and Wasm (run with `moonrun`), and their I/O functions are `async`.
 
 All text is `Bytes`, because file contents needn't be valid UTF-8, and OCaml's
 `string` is a byte sequence too. `DiffInput::of_string` encodes a `String` as UTF-8,
@@ -67,7 +83,10 @@ and `@utf8.decode_lossy` from `moonbitlang/core/encoding/utf8` decodes the resul
   by hash table order. This port uses first appearance, so a tie may be broken
   differently.
 - **Terminal width** is read from the controlling terminal on every Unix. Upstream
-  only does so on Linux, using 121 columns elsewhere.
+  only does so on Linux, using 121 columns elsewhere. The Wasm build can't see the
+  terminal, so it always uses 121 columns unless given `-width`.
+- **File names** must be valid UTF-8, as `moonbitlang/async` takes them as strings.
+  File contents can be any bytes.
 - **Command line errors and `-help`** have the same content as Core's `Command`, but
   not exactly the same layout.
 - **`-double-check`** compares the files in-process rather than running `cmp`.
@@ -85,5 +104,10 @@ moon test
 moon build --release && python3 test/cli/run_cram.py
 ```
 
+```bash
+moon build --release --target wasm && python3 test/cli/run_cram.py --target wasm
+```
+
 `moon test` runs upstream's expect tests, ported to MoonBit, on any backend. `test/cli`
-holds upstream's command line tests as cram files; they need `bash` and `git`.
+holds upstream's command line tests as cram files; they need `bash` and `git`, and
+run either the native build or the Wasm build under `moonrun`.

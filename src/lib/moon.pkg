@@ -8,8 +8,4 @@ import {
 
 warnings = "-79"
 
-options(
-  targets: { "compare_core.mbt": [ "native" ] },
-)
-
-supported_targets = "+native"
+supported_targets = "native+wasm"
