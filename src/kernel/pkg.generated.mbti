@@ -94,10 +94,11 @@ pub fn warn_if_no_trailing_newline(warn_if_no_trailing_newline_in_both~ : Bool, 
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct Affix {
   text : Bytes
   styles : Array[@ansi_text.Attr]
-} derive(Eq, @debug.Debug)
+}
 pub fn Affix::blank() -> Self
 pub fn Affix::new(Bytes, styles? : Array[@ansi_text.Attr]) -> Self
 
@@ -125,6 +126,7 @@ pub(all) enum ComparisonResult {
 pub fn ComparisonResult::has_no_diff(Self) -> Bool
 pub fn ComparisonResult::new(Configuration, prev~ : DiffInput, next~ : DiffInput, compare_assuming_text~ : (Configuration, DiffInput, DiffInput) -> Self) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Configuration {
   output : Output
   rules : Rules
@@ -149,29 +151,33 @@ pub(all) struct Configuration {
   warn_if_no_trailing_newline_in_both : Bool
   side_by_side : WrapOrTruncate?
   width_override : Int32?
-} derive(Eq, @debug.Debug)
+}
 pub fn Configuration::check(Self) -> Self
 pub fn Configuration::default() -> Self
 pub fn Configuration::override_with(Self, output? : Output, rules? : Rules, float_tolerance? : Double?, produce_unified_lines? : Bool, unrefined? : Bool, keep_ws? : Bool, find_moves? : Bool, split_long_lines? : Bool, interleave? : Bool, assume_text? : Bool, context? : Int32, line_big_enough? : Int32, word_big_enough? : Int32, shallow? : Bool, quiet? : Bool, double_check? : Bool, mask_uniques? : Bool, prev_alt? : Bytes?, next_alt? : Bytes?, location_style? : LocationStyle, warn_if_no_trailing_newline_in_both? : Bool, side_by_side? : WrapOrTruncate?, width_override? : Int32?) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) struct DiffInput {
   name : Bytes
   text : Bytes
-} derive(Eq, @debug.Debug)
+}
 pub fn DiffInput::of_string(StringView, StringView) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) struct DiskAffix {
   text : Bytes?
   style : Array[@ansi_text.Attr]?
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) struct DiskLineRule {
   prefix : DiskAffix?
   suffix : DiskAffix?
   style : Array[@ansi_text.Attr]?
   word_same : Array[@ansi_text.Attr]?
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) enum DiskOutput {
   OAscii
   OHtml
@@ -179,39 +185,43 @@ pub(all) enum DiskOutput {
   OUnrefinedAnsi
   OUnrefinedHtml
   OSideBySide(WrapOrTruncate)
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) struct DiskRule {
   prefix : DiskAffix?
   suffix : DiskAffix?
   style : Array[@ansi_text.Attr]?
-} derive(Eq, @debug.Debug)
+}
 
 pub(all) enum DiskVersion {
   Current
   Outdated
 }
 
+#derive(Eq, @debug.Debug)
 pub(all) enum FileName {
   Real(real_name~ : Bytes, alt_name~ : Bytes?)
   Fake(Bytes)
-} derive(Eq, @debug.Debug)
+}
 pub fn FileName::append(Self, Bytes) -> Self
 pub fn FileName::dev_null() -> Self
 pub fn FileName::display_name(Self) -> Bytes
 pub fn FileName::real_name(Self) -> Bytes
 
+#derive(Eq, @debug.Debug)
 pub(all) enum GutterSide {
   Prev(line~ : Int32)
   Next(line~ : Int32)
   Same(prev~ : Int32, next~ : Int32)
   Unified(prev~ : Int32, next~ : Int32)
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Line {
   line_number : Int32?
   contents : Array[(Tag, Array[@ansi_text.Element])]
-} derive(Eq, @debug.Debug)
+}
 pub fn Line::any_non_same(Self) -> Bool
 pub fn Line::styled_string(Self, output? : Output, style~ : (Tag, Bytes) -> Bytes) -> Bytes
 pub fn Line::to_bytes(Self) -> Bytes
@@ -219,26 +229,29 @@ pub fn Line::truncate(Self, width~ : Int32) -> Self
 pub fn Line::width(Self) -> Int32
 pub fn Line::wrap(Self, width~ : Int32) -> Array[Self]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum LineInfo {
   Same(Line, Line)
   Prev(Line, Int32?)
   Next(Line, Int32?)
-} derive(Eq, @debug.Debug)
+}
 pub fn LineInfo::lines(Self) -> (Line, Line)
 pub fn LineInfo::numbers(Self) -> (Int32?, Int32?)
 pub fn LineInfo::truncate(Self, width~ : Int32) -> Self
 pub fn LineInfo::wrap(Self, width~ : Int32) -> Array[Self]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum LocationStyle {
   Diff
   Omake
   NoLocation
   Separator
-} derive(Eq, @debug.Debug)
+}
 pub fn LocationStyle::all() -> Array[Self]
 pub fn LocationStyle::of_string(String) -> Self?
 pub fn LocationStyle::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct OnDisk {
   dont_produce_unified_lines : Bool?
   dont_overwrite_word_old_word_new : Bool?
@@ -275,23 +288,25 @@ pub(all) struct OnDisk {
   location_style : LocationStyle
   warn_if_no_trailing_newline_in_both : Bool
   width_override : Int32?
-} derive(Eq, @debug.Debug)
+}
 pub fn OnDisk::of_sexp(@sexp.Sexp) -> Self raise @sexp.SexpError
 pub fn OnDisk::of_sexp_versioned(@sexp.Sexp) -> (Self, DiskVersion) raise @sexp.SexpError
 pub fn OnDisk::to_configuration(Self) -> Configuration
 pub fn OnDisk::to_sexp(Self) -> @sexp.Sexp
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Output {
   Ansi
   Ascii
   Html
-} derive(Eq, @debug.Debug)
+}
 pub fn Output::implies_unrefined(Self) -> Bool
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Piece {
   Newline(Int32, Bytes?)
   Word(Bytes)
-} derive(Eq, @debug.Debug)
+}
 
 pub(all) struct Platform {
   mtime : (FileName) -> Double?
@@ -300,11 +315,12 @@ pub(all) struct Platform {
 }
 pub fn Platform::without_unix() -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Rule {
   pre : Affix
   suf : Affix
   styles : Array[@ansi_text.Attr]
-} derive(Eq, @debug.Debug)
+}
 pub fn Rule::blank() -> Self
 pub fn Rule::new(pre? : Affix, suf? : Affix, Array[@ansi_text.Attr]) -> Self
 pub fn Rule::strip_prefix(Self) -> Self
@@ -312,6 +328,7 @@ pub fn Rule::strip_styles(Self) -> Self
 pub fn Rule::unstyled_prefix(Bytes) -> Self
 pub fn Rule::use_prefix_text_from(Self, this_prefix~ : Self) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Rules {
   line_same : Rule
   line_prev : Rule
@@ -331,22 +348,24 @@ pub(all) struct Rules {
   removed_in_move : Rule
   added_in_move : Rule
   line_unified_in_move : Rule
-} derive(Eq, @debug.Debug)
+}
 pub fn Rules::default() -> Self
 pub fn Rules::strip_styles(Self) -> Self
 pub fn Rules::with_color_palette(ColorPalette) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Tag {
   Prev
   Same
   Next
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) enum WrapOrTruncate {
   Wrap
   Truncate
   Neither
-} derive(Eq, @debug.Debug)
+}
 
 // Type aliases
 pub type Hunks = Array[@patience_diff.Hunk[Bytes]]

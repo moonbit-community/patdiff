@@ -1,10 +1,11 @@
 ///|
 /// Output formats. `Ascii` is `Ansi` with no styles.
+#derive(Debug, Eq)
 pub(all) enum Output {
   Ansi
   Ascii
   Html
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn Output::implies_unrefined(self : Output) -> Bool {

@@ -29,42 +29,47 @@ pub fn[A] unified(ArrayView[Hunk[A]]) -> Array[Hunk[A]]
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct Hunk[A] {
   prev_start : Int32
   prev_size : Int32
   next_start : Int32
   next_size : Int32
   ranges : Array[Range[A]]
-} derive(Eq, @debug.Debug)
+}
 pub fn[A] Hunk::all_same(Self[A]) -> Bool
 pub fn[A, B] Hunk::concat_map(Self[A], (Range[A]) -> Array[Range[B]]) -> Self[B]
 
+#derive(Eq, @debug.Debug)
 pub(all) struct MatchingBlock {
   prev_start : Int32
   next_start : Int32
   length : Int32
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) enum MoveKind {
   Move(Int32)
   WithinMove(Int32)
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Range[A] {
   Same(Array[(A, A)])
   Prev(Array[A], MoveKind?)
   Next(Array[A], MoveKind?)
   Replace(Array[A], Array[A], Int32?)
   Unified(Array[A], Int32?)
-} derive(Eq, @debug.Debug)
+}
 pub fn[A] Range::next_size(Self[A]) -> Int32
 pub fn[A] Range::prev_and_next(Self[A]) -> (Array[Self[A]], Array[Self[A]])
 pub fn[A] Range::prev_size(Self[A]) -> Int32
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Side {
   Left
   Right
-} derive(Eq, @debug.Debug)
+}
 
 // Type aliases
 pub type MoveId = Int32

@@ -1,10 +1,11 @@
 ///|
 /// S-expressions, as used by patdiff's configuration files. Atoms are bytes
 /// because the text of a prefix or suffix can be anything.
+#derive(Debug, Eq)
 pub(all) enum Sexp {
   Atom(Bytes)
   List(Array[Sexp])
-} derive(Debug, Eq)
+}
 
 ///|
 pub(all) suberror SexpError {

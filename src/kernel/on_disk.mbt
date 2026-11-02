@@ -3,10 +3,11 @@
 
 ///|
 /// A prefix or a suffix, possibly with an associated style.
+#derive(Debug, Eq)
 pub(all) struct DiskAffix {
   text : Bytes?
   style : Array[@ansi_text.Attr]?
-} derive(Debug, Eq)
+}
 
 ///|
 fn DiskAffix::get_text(self : DiskAffix) -> Bytes {
@@ -22,11 +23,12 @@ fn DiskAffix::to_internal(self : DiskAffix, min_width~ : Int32) -> Affix {
 }
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct DiskRule {
   prefix : DiskAffix?
   suffix : DiskAffix?
   style : Array[@ansi_text.Attr]?
-} derive(Debug, Eq)
+}
 
 ///|
 fn DiskRule::blank() -> DiskRule {
@@ -49,12 +51,13 @@ fn DiskRule::to_internal(self : DiskRule) -> Rule {
 }
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct DiskLineRule {
   prefix : DiskAffix?
   suffix : DiskAffix?
   style : Array[@ansi_text.Attr]?
   word_same : Array[@ansi_text.Attr]?
-} derive(Debug, Eq)
+}
 
 ///|
 fn line_rule(
@@ -129,6 +132,7 @@ fn line_unified_in_move_default() -> DiskLineRule {
 }
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum DiskOutput {
   OAscii
   OHtml
@@ -136,10 +140,11 @@ pub(all) enum DiskOutput {
   OUnrefinedAnsi
   OUnrefinedHtml
   OSideBySide(WrapOrTruncate)
-} derive(Debug, Eq)
+}
 
 ///|
 /// The contents of a configuration file, in the newest format.
+#derive(Debug, Eq)
 pub(all) struct OnDisk {
   dont_produce_unified_lines : Bool?
   dont_overwrite_word_old_word_new : Bool?
@@ -176,7 +181,7 @@ pub(all) struct OnDisk {
   location_style : LocationStyle
   warn_if_no_trailing_newline_in_both : Bool
   width_override : Int32?
-} derive(Debug, Eq)
+}
 
 // Reading s-expressions.
 

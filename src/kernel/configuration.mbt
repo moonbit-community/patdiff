@@ -31,14 +31,16 @@ pub const DEFAULT_DOUBLE_COLUMN_WIDTH = 121
 let default_double_column_width : Int32 = DEFAULT_DOUBLE_COLUMN_WIDTH
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum WrapOrTruncate {
   Wrap
   Truncate
   /// Neither; only accepted when building rows with `build_side_by_side`.
   Neither
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct Configuration {
   output : Output
   rules : Rules
@@ -64,7 +66,7 @@ pub(all) struct Configuration {
   warn_if_no_trailing_newline_in_both : Bool
   side_by_side : WrapOrTruncate?
   width_override : Int32?
-} derive(Debug, Eq)
+}
 
 ///|
 /// Checks the invariants, aborting if they don't hold.

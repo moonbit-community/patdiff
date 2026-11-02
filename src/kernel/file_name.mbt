@@ -1,10 +1,11 @@
 ///|
 /// A file being compared. `Real` files can be read, and may be displayed under
 /// an alternative name.
+#derive(Debug, Eq)
 pub(all) enum FileName {
   Real(real_name~ : Bytes, alt_name~ : Bytes?)
   Fake(Bytes)
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn FileName::real_name(self : FileName) -> Bytes {
@@ -70,10 +71,11 @@ pub fn FileName::dev_null() -> FileName {
 
 ///|
 /// A named blob of text to diff.
+#derive(Debug, Eq)
 pub(all) struct DiffInput {
   name : Bytes
   text : Bytes
-} derive(Debug, Eq)
+}
 
 ///|
 /// A `DiffInput` from UTF-8 text.

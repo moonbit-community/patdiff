@@ -3,12 +3,13 @@
 /// only ever have `Prev` and `Same` segments while lines in the next file will
 /// only have `Same` and `Next`, so all deletions are denoted on the left and all
 /// additions on the right.
+#derive(Debug, Eq)
 pub(all) struct Line {
   /// The line number in the original file. Only `None` for an empty line
   /// produced when padding to match alignment.
   line_number : Int32?
   contents : Array[(Tag, @ansi_text.AnsiText)]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn Line::to_bytes(self : Line) -> Bytes {
@@ -123,11 +124,12 @@ pub fn Line::truncate(self : Line, width~ : Int32) -> Line {
 
 ///|
 /// A row of a side-by-side diff.
+#derive(Debug, Eq)
 pub(all) enum LineInfo {
   Same(Line, Line)
   Prev(Line, @pd.MoveId?)
   Next(Line, @pd.MoveId?)
-} derive(Debug, Eq)
+}
 
 ///|
 /// In the case of a `Same` line, it may be necessary to pad one side with empty
