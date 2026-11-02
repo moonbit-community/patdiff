@@ -1,0 +1,7 @@
+import {
+  "moonbit-community/patdiff/internal/bstr",
+  "moonbitlang/core/cmp",
+  "moonbitlang/core/string",
+}
+
+warnings = "-79"

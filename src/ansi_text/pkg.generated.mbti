@@ -1,0 +1,315 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbit-community/patdiff/ansi_text"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn apply(ArrayView[Attr], Bytes) -> Bytes
+
+pub fn center(ArrayView[Element], char? : Byte, style? : ArrayView[Attr], width~ : Int32) -> Array[Element]
+
+pub fn char_width(Char) -> Int32
+
+pub fn compress(ArrayView[Element]) -> Array[Element]
+
+pub fn default_text_color_for(Color) -> Color
+
+pub fn is_empty(ArrayView[Element]) -> Bool
+
+pub fn map(ArrayView[Element], (Element) -> Element?) -> Array[Element]
+
+pub fn minimize(Bytes) -> Bytes
+
+pub fn overrides(new_attr~ : Attr, old_attr~ : Attr) -> Bool
+
+pub fn pad(ArrayView[Element], char? : Byte, style? : ArrayView[Attr], width~ : Int32) -> Array[Element]
+
+pub fn parse(Bytes) -> Array[Element]
+
+pub fn simplify_styles(ArrayView[Element]) -> Array[Element]
+
+pub fn split(ArrayView[Element], pos~ : Int32) -> (Array[Element], Array[Element])
+
+pub fn strip(Bytes) -> Bytes
+
+pub fn style_at_end(ArrayView[Element]) -> Array[Attr]
+
+pub fn style_closes(new_style~ : ArrayView[Attr], old_style~ : ArrayView[Attr]) -> Bool
+
+pub fn style_compress(ArrayView[Attr]) -> Array[Attr]
+
+pub fn style_delta(old_style~ : ArrayView[Attr], added_style~ : ArrayView[Attr]) -> Array[Attr]
+
+pub fn style_includes_reset(ArrayView[Attr]) -> Bool
+
+pub fn style_is_reset(ArrayView[Attr]) -> Bool
+
+pub fn style_of_sgr_params(ArrayView[Int32?]) -> Array[Attr]
+
+pub fn style_ranges_adjust_by(ArrayView[StyleRange], start? : Int32, end? : Int32) -> Array[StyleRange]
+
+pub fn style_ranges_apply(text~ : Text, ArrayView[StyleRange]) -> Array[Element]
+
+pub fn style_ranges_exclude(ArrayView[StyleRange], start~ : Int32, end~ : Int32) -> Array[StyleRange]
+
+pub fn style_ranges_identify(ArrayView[Element]) -> (Array[StyleRange], Array[Element])
+
+pub fn style_ranges_split(ArrayView[StyleRange], pos~ : Int32) -> (Array[StyleRange], Array[StyleRange])
+
+pub fn style_to_string(ArrayView[Attr]) -> Bytes
+
+pub fn style_to_string_hum(ArrayView[Attr]) -> String
+
+pub fn style_turn_off(ArrayView[Attr]) -> Array[Attr]
+
+pub fn style_update(old_style~ : ArrayView[Attr], added_style~ : ArrayView[Attr]) -> Array[Attr]
+
+pub fn to_bytes(ArrayView[Element]) -> Bytes
+
+pub fn to_bytes_hum(ArrayView[Element]) -> Bytes
+
+pub fn to_double_column(width~ : Int32, left~ : Bytes, right~ : Bytes) -> Array[(Bytes, Bytes)]
+
+pub fn to_unstyled(ArrayView[Element]) -> Bytes
+
+pub fn truncate(ArrayView[Element], width~ : Int32) -> Array[Element]
+
+pub fn visualize(Bytes) -> Bytes
+
+pub fn width(ArrayView[Element]) -> Int32
+
+pub fn wrap(ArrayView[Element], width~ : Int32) -> Array[Array[Element]]
+
+// Errors
+
+// Types and methods
+pub(all) enum Attr {
+  Reset
+  Bold
+  Faint
+  NormalWeight
+  Italic
+  Fraktur
+  NotEmphasis
+  Underline
+  DoubleUl
+  NotUnderline
+  Blink
+  FastBlink
+  NotBlink
+  Framed
+  Encircled
+  NotFramed
+  Superscript
+  Subscript
+  NotScript
+  Invert
+  NotInvert
+  Hide
+  NotHide
+  Strike
+  NotStrike
+  Overline
+  NotOverline
+  VariableWidth
+  FixedWidth
+  Fg(Color)
+  Bg(Color)
+  UlColor(Color)
+  Font(Int32)
+  Ideogram(Int32)
+  Other(Array[Int32])
+} derive(Eq, @debug.Debug)
+pub fn Attr::of_codes(ArrayView[Int32]) -> Self
+pub fn Attr::to_string(Self) -> String
+pub fn Attr::to_string_hum(Self) -> String
+pub fn Attr::turn_off(Self) -> Self?
+
+pub(all) enum ClearLine {
+  ToLineEnd
+  ToLineStart
+  WholeLine
+} derive(Eq, @debug.Debug)
+
+pub(all) enum ClearScreen {
+  ToScreenEnd
+  ToScreenStart
+  WholeScreen
+  ScreenAndScrollback
+} derive(Eq, @debug.Debug)
+
+pub(all) enum Color {
+  Default
+  Standard(Sgr8)
+  Bright(Sgr8)
+  Rgb6(Rgb6)
+  Gray24(Gray24)
+  Rgb256(Rgb256)
+} derive(Compare, Eq, @debug.Debug)
+pub fn Color::to_bg_code(Self) -> Array[Int32]
+pub fn Color::to_fg_code(Self) -> Array[Int32]
+pub fn Color::to_string_hum(Self) -> String
+pub fn Color::to_ul_code(Self) -> Array[Int32]
+
+pub(all) enum Control {
+  CursorUp(Int32?)
+  CursorDown(Int32?)
+  CursorForward(Int32?)
+  CursorBackward(Int32?)
+  CursorNextLine(Int32?)
+  CursorPrevLine(Int32?)
+  CursorToCol(Int32?)
+  CursorToPos(Int32?, Int32?)
+  EraseDisplay(ClearScreen?)
+  EraseLine(ClearLine?)
+  ScrollUp(Int32?)
+  ScrollDown(Int32?)
+  Unknown(params~ : Array[Int32?], terminal~ : Char)
+} derive(Eq, @debug.Debug)
+pub fn Control::to_bytes(Self) -> Bytes
+pub fn Control::to_string_hum(Self) -> String
+
+pub(all) struct Dsr {
+  query : DsrQuery
+} derive(Eq, @debug.Debug)
+pub fn Dsr::to_bytes(Self) -> Bytes
+pub fn Dsr::to_string_hum(Self) -> String
+
+pub(all) enum DsrQuery {
+  DeviceStatus
+  CursorPosition
+  Other(Int32)
+} derive(Eq, @debug.Debug)
+
+pub(all) enum Element {
+  Text(Text)
+  Style(Array[Attr])
+  Hyperlink(Hyperlink)
+  PrivateMode(PrivateMode)
+  Osc(Osc)
+  Dsr(Dsr)
+  Control(Control)
+  Unknown(UnknownEsc)
+} derive(Eq, @debug.Debug)
+pub fn Element::to_bytes(Self) -> Bytes
+pub fn Element::to_bytes_hum(Self) -> Bytes
+
+pub(all) struct Gray24 {
+  level : Int32
+} derive(Compare, Eq, @debug.Debug)
+pub fn Gray24::of_code(Int32) -> Self
+pub fn Gray24::of_level(Int32) -> Self
+pub fn Gray24::to_code(Self) -> Int32
+
+pub(all) enum Hyperlink {
+  Start(Bytes)
+  End
+} derive(Eq, @debug.Debug)
+pub fn Hyperlink::to_bytes(Self) -> Bytes
+pub fn Hyperlink::to_bytes_hum(Self) -> Bytes
+
+pub(all) struct Osc {
+  command : OscCommand
+} derive(Eq, @debug.Debug)
+pub fn Osc::to_bytes(Self) -> Bytes
+pub fn Osc::to_bytes_hum(Self) -> Bytes
+
+pub(all) enum OscCommand {
+  SetTitle(Bytes)
+  SetIconName(Bytes)
+  SetWorkingDirectory(Bytes)
+  Other(Bytes)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct PrivateMode {
+  modes : Array[Int32]
+  action : PrivateModeAction
+} derive(Eq, @debug.Debug)
+pub fn PrivateMode::is_alternate_screen(Self) -> Bool
+pub fn PrivateMode::to_bytes(Self) -> Bytes
+pub fn PrivateMode::to_string_hum(Self) -> String
+
+pub(all) enum PrivateModeAction {
+  Set
+  Reset
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Rgb256 {
+  r : Int32
+  g : Int32
+  b : Int32
+} derive(Compare, Eq, @debug.Debug)
+pub fn Rgb256::of_rgb(Int32, Int32, Int32) -> Self
+
+pub(all) struct Rgb6 {
+  r : Int32
+  g : Int32
+  b : Int32
+} derive(Compare, Eq, @debug.Debug)
+pub fn Rgb6::of_code(Int32) -> Self
+pub fn Rgb6::of_rgb(Int32, Int32, Int32) -> Self
+pub fn Rgb6::to_code(Self) -> Int32
+
+pub(all) enum Sgr8 {
+  Black
+  Red
+  Green
+  Yellow
+  Blue
+  Magenta
+  Cyan
+  White
+} derive(Compare, Eq, @debug.Debug)
+pub fn Sgr8::of_code(Int32) -> Self
+pub fn Sgr8::to_code(Self) -> Int32
+pub fn Sgr8::to_string_hum(Self) -> String
+
+pub(all) struct StyleRange {
+  start : Int32
+  end : Int32
+  style : Array[Attr]
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Text {
+  str : Bytes
+  char_widths : Array[(Char, Int32)]
+  width : Int32
+} derive(Eq, @debug.Debug)
+pub fn Text::concat(ArrayView[Self]) -> Self
+pub fn Text::is_empty(Self) -> Bool
+pub fn Text::of_bytes(Bytes) -> Self
+pub fn Text::split(Self, pos~ : Int32) -> (Self, Self)
+pub impl Add for Text
+
+pub(all) struct TextWithStyleRanges {
+  text : Text
+  ranges : Array[StyleRange]
+} derive(Eq, @debug.Debug)
+pub fn TextWithStyleRanges::is_empty(Self) -> Bool
+pub fn TextWithStyleRanges::of_text_with_ansi(ArrayView[Element]) -> Self?
+pub fn TextWithStyleRanges::split(Self, pos~ : Int32) -> (Self, Self)
+pub fn TextWithStyleRanges::to_bytes(Self) -> Bytes
+pub fn TextWithStyleRanges::to_bytes_hum(Self) -> Bytes
+pub fn TextWithStyleRanges::to_text_with_ansi(Self) -> Array[Element]
+pub fn TextWithStyleRanges::to_unstyled(Self) -> Bytes
+pub fn TextWithStyleRanges::unstyle_between(Self, start~ : Int32, end~ : Int32) -> Self
+pub fn TextWithStyleRanges::width(Self) -> Int32
+
+pub(all) enum UnknownEsc {
+  Csi(Bytes)
+  Fe(Byte)
+  Fp(Byte)
+  Nf(Bytes)
+  Incomplete
+} derive(Eq, @debug.Debug)
+pub fn UnknownEsc::to_bytes(Self) -> Bytes
+pub fn UnknownEsc::to_bytes_hum(Self) -> Bytes
+
+// Type aliases
+pub type AnsiText = Array[Element]
+
+pub type Style = Array[Attr]
+
+// Traits
