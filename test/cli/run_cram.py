@@ -27,7 +27,7 @@ def parse(path):
         for line in f.read().split("\n"):
             if line.startswith("  $ "):
                 steps.append([line[4:], []])
-            elif line.startswith("  > ") and steps and not steps[-1][1]:
+            elif (line.startswith("  > ") or line == "  >") and steps and not steps[-1][1]:
                 steps[-1][0] += "\n" + line[4:]
             elif line.startswith("  ") and steps:
                 steps[-1][1].append(line[2:])
@@ -83,14 +83,20 @@ def run(path):
     for i, (cmd, expected) in enumerate(steps):
         chunk = results.get(i, "")
         body, _, status = chunk.rpartition(MARKER + " exit ")
-        lines = body.split("\n")
-        # The `echo` above ends a last line without a newline, then a line is empty.
-        while lines and lines[-1] == "":
-            lines.pop()
+        # The `echo` above adds a newline, which ends a last line that lacks one.
+        if body.endswith("\n"):
+            body = body[:-1]
+        if body.endswith("\n"):
+            body = body[:-1]
+        lines = body.split("\n") if body else []
         code = int(status.strip() or "0")
-        if code != 0:
-            lines.append(f"[{code}]")
         want = list(expected)
+        if code == 0:
+            # Blank lines after the output are just separators in the file.
+            while lines and lines[-1] == "":
+                lines.pop()
+        else:
+            lines.append(f"[{code}]")
         while want and want[-1] == "":
             want.pop()
         if lines != want:
