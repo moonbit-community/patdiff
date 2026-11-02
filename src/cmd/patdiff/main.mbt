@@ -510,6 +510,20 @@ fn run(argv : ArrayView[String]) -> Int raise {
 }
 
 ///|
+/// An error, rendered the way OCaml's `Exn.to_string` would.
+fn describe_error(err : Error) -> String {
+  match err {
+    @lib.Failure(msg) => {
+      let quoted = msg
+        .replace_all(old="\\", new="\\\\")
+        .replace_all(old="\"", new="\\\"")
+      "(Failure \"\{quoted}\")"
+    }
+    err => err.to_string()
+  }
+}
+
+///|
 fn main {
   let argv = @env.args()
   let code = try run(argv[1:]) catch {
@@ -521,14 +535,11 @@ fn main {
       )
       1
     }
-    @lib.Failure(msg) => {
-      let quoted = msg.replace_all(old="\\", new="\\\\").replace_all(old="\"", new="\\\"")
-      @sys.print_stderr(@bstr.of_string("(Failure \"\{quoted}\")\n"))
-      2
-    }
     err => {
-      @sys.print_stderr(@bstr.of_string("\{err}\n"))
-      2
+      @sys.print_stderr(
+        @bstr.of_string("Uncaught exception:\n  \n  \{describe_error(err)}\n\n"),
+      )
+      1
     }
   }
   @sys.exit(code)
