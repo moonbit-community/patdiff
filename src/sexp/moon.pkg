@@ -3,3 +3,7 @@ import {
 }
 
 warnings = "-79"
+
+import {
+  "moonbitlang/core/test",
+} for "test"

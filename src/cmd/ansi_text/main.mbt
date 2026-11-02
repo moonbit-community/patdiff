@@ -14,11 +14,11 @@ fn run(args : ArrayView[String]) -> Int raise {
   // Each line is transformed on its own, so a line's styles don't depend on the
   // lines before it.
   let transform : ((Bytes) -> Bytes)? = match args {
-    ["visualize"] => Some(@ansi_text.visualize)
+    ["visualize"] => Some(@text.visualize)
     ["visualize", "-minimize"] =>
-      Some(input => @ansi_text.visualize(@ansi_text.minimize(input)))
-    ["minimize"] => Some(@ansi_text.minimize)
-    ["strip"] => Some(@ansi_text.strip)
+      Some(input => @text.visualize(@text.minimize(input)))
+    ["minimize"] => Some(@text.minimize)
+    ["strip"] => Some(@text.strip)
     _ => None
   }
   match transform {
