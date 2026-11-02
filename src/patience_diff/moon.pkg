@@ -1,0 +1,7 @@
+import {
+  "moonbitlang/core/cmp",
+  "moonbitlang/core/hashmap",
+}
+
+
+warnings = "-79"

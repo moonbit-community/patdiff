@@ -1,0 +1,45 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbit-community/patdiff/internal/bstr"
+
+// Values
+pub fn concat(ArrayView[Bytes], sep? : Bytes) -> Bytes
+
+pub fn contains(Bytes, Bytes) -> Bool
+
+pub fn for_all(BytesView, (Byte) -> Bool) -> Bool
+
+pub fn is_substring_at(Bytes, Int32, Bytes) -> Bool
+
+pub fn is_whitespace(Byte) -> Bool
+
+pub fn lsplit2(Bytes, Byte) -> (Bytes, Bytes)?
+
+pub fn of_int(Int32) -> Bytes
+
+pub fn of_string(StringView) -> Bytes
+
+pub fn pad_left(Bytes, Int32) -> Bytes
+
+pub fn rstrip(Bytes) -> Bytes
+
+pub fn spaces(Int32) -> Bytes
+
+pub fn split_lines(Bytes) -> Array[Bytes]
+
+pub fn split_on(Bytes, Byte) -> Array[Bytes]
+
+pub fn[T] stable_sorted_by(ArrayView[T], (T, T) -> Int32) -> Array[T]
+
+pub fn strip(Bytes) -> Bytes
+
+pub fn sub(Bytes, Int32, Int32) -> Bytes
+
+pub fn to_string(BytesView) -> String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
