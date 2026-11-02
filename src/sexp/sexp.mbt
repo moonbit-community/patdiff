@@ -204,11 +204,11 @@ fn must_escape(s : Bytes) -> Bool {
     return true
   }
   for i, c in s {
-    let next = s.get(i + 1)
     match c {
       b'(' | b')' | b'"' | b';' | b'\\' => return true
-      b'|' if i == 0 && next is Some(b'#') => return true
-      b'#' if next is Some(b'|' | b';') => return true
+      // These would read as the start or end of a block comment.
+      b'|' if i > 0 && s[i - 1] == b'#' => return true
+      b'#' if i > 0 && s[i - 1] == b'|' => return true
       c if c <= 0x20 || c >= 0x7F => return true
       _ => ()
     }

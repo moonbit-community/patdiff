@@ -56,29 +56,43 @@ fn within_move(move_id : MoveId?) -> MoveKind? {
 }
 
 ///|
-/// Keep only what `prev` sees: `Replace` becomes `Prev` and `Next` disappears.
+/// What `self` contributes to each side.
+pub fn[A] Range::prev_and_next(
+  self : Range[A],
+) -> (Array[Range[A]], Array[Range[A]]) {
+  match self {
+    Same(_) => ([self], [self])
+    Prev(_, None | Some(Move(_))) => ([self], [])
+    // Don't include `Prev`s that are within moves because they are showing that
+    // some code was deleted from a different `Prev` to create a corresponding
+    // `Next`.
+    Prev(_, Some(WithinMove(_))) => ([], [])
+    Next(_, _) => ([], [self])
+    Replace(l_range, r_range, None) => ([Prev(l_range, None)], [Next(r_range, None)])
+    // Don't include `Replace`s for the same reason as a `Prev` within a move.
+    Replace(_, r_range, Some(move_id)) =>
+      ([], [Next(r_range, Some(WithinMove(move_id)))])
+    Unified(_, Some(_)) => ([], [self])
+    Unified(_, None) => ([self], [self])
+  }
+}
+
+///|
+/// The ranges as seen from `prev`.
 pub fn[A] prev_only(ranges : ArrayView[Range[A]]) -> Array[Range[A]] {
   let out = []
   for range in ranges {
-    match range {
-      Replace(l_range, _, move_id) => out.push(Prev(l_range, within_move(move_id)))
-      Next(_, _) => ()
-      range => out.push(range)
-    }
+    out.push_iter(range.prev_and_next().0.iter())
   }
   out
 }
 
 ///|
-/// Keep only what `next` sees: `Replace` becomes `Next` and `Prev` disappears.
+/// The ranges as seen from `next`.
 pub fn[A] next_only(ranges : ArrayView[Range[A]]) -> Array[Range[A]] {
   let out = []
   for range in ranges {
-    match range {
-      Replace(_, r_range, move_id) => out.push(Next(r_range, within_move(move_id)))
-      Prev(_, _) => ()
-      range => out.push(range)
-    }
+    out.push_iter(range.prev_and_next().1.iter())
   }
   out
 }
@@ -86,9 +100,14 @@ pub fn[A] next_only(ranges : ArrayView[Range[A]]) -> Array[Range[A]] {
 ///|
 pub fn[A] Range::prev_size(self : Range[A]) -> Int {
   match self {
-    Unified(lines, _) | Replace(lines, _, _) | Prev(lines, _) => lines.length()
+    Unified(lines, None)
+    | Replace(lines, _, None)
+    | Prev(lines, None | Some(Move(_))) => lines.length()
     Same(lines) => lines.length()
-    Next(_, _) => 0
+    // Don't include `Prev`s that are within moves as they are conceptually
+    // `Next`s.
+    Replace(_, _, Some(_)) | Prev(_, Some(WithinMove(_))) | Next(_, _) | Unified(_, Some(_)) =>
+      0
   }
 }
 
