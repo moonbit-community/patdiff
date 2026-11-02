@@ -37,12 +37,11 @@ pub(all) suberror SysError {
 pub impl Show for SysError
 
 // Types and methods
-#derive(Eq, @debug.Debug)
 pub(all) enum FileKind {
   Regular
   Directory
   OtherKind
-}
+} derive(Eq, @debug.Debug)
 
 pub(all) struct Stat {
   kind : FileKind

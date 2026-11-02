@@ -107,12 +107,11 @@ pub async fn exit(code : Int32) -> Unit noraise {
 }
 
 ///|
-#derive(Debug, Eq)
 pub(all) enum FileKind {
   Regular
   Directory
   OtherKind
-}
+} derive(Debug, Eq)
 
 ///|
 pub(all) struct Stat {

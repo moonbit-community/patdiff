@@ -1,11 +1,10 @@
 ///|
 /// Which side a piece of refined text came from.
-#derive(Debug, Eq)
 pub(all) enum Tag {
   Prev
   Same
   Next
-}
+} derive(Debug, Eq)
 
 ///|
 /// A hunk whose lines are lists of tagged segments.
@@ -15,11 +14,10 @@ pub type StructuredHunk = @pd.Hunk[Array[(Tag, Bytes)]]
 /// A token of refinement. `Newline(n, ws)` stands for `n` consecutive newlines
 /// followed by the whitespace `ws`; this collapses consecutive whitespace as
 /// tightly as possible, but some consecutive whitespace does not get collapsed.
-#derive(Debug, Eq)
 pub(all) enum Piece {
   Newline(Int32, Bytes?)
   Word(Bytes)
-}
+} derive(Debug, Eq)
 
 ///|
 /// Splits lines, already split into words, into an array of pieces.

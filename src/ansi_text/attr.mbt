@@ -2,7 +2,6 @@
 /// A subset of the ANSI select-graphic-rendition attributes, grouped into
 /// related attributes that override one another; see
 /// https://en.wikipedia.org/wiki/ANSI_escape_code#Select_Graphic_Rendition_parameters.
-#derive(Debug, Eq)
 pub(all) enum Attr {
   Reset
   Bold
@@ -39,7 +38,7 @@ pub(all) enum Attr {
   Font(Int32)
   Ideogram(Int32)
   Other(Array[Int32])
-}
+} derive(Debug, Eq)
 
 ///|
 /// An attribute that turns off `self`, if applicable.

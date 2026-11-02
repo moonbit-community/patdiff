@@ -1,6 +1,5 @@
 ///|
 /// One part of a text with ANSI escapes.
-#derive(Debug, Eq)
 pub(all) enum Element {
   Text(Text)
   Style(Array[Attr])
@@ -10,7 +9,7 @@ pub(all) enum Element {
   Dsr(Dsr)
   Control(Control)
   Unknown(UnknownEsc)
-}
+} derive(Debug, Eq)
 
 ///|
 /// Text as a sequence of plain runs and ANSI elements.

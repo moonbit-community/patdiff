@@ -1,6 +1,5 @@
 ///|
 /// The basic colors of the SGR ranges 30-37, 40-47, 90-97 and 100-107.
-#derive(Debug, Eq, Compare)
 pub(all) enum Sgr8 {
   Black
   Red
@@ -10,7 +9,7 @@ pub(all) enum Sgr8 {
   Magenta
   Cyan
   White
-}
+} derive(Debug, Eq, Compare)
 
 ///|
 pub fn Sgr8::of_code(code : Int32) -> Sgr8 {
@@ -57,12 +56,11 @@ pub fn Sgr8::to_string_hum(self : Sgr8) -> String {
 
 ///|
 /// The rgb subset of the codes under `38;5` and `48;5`, each channel in 0-5.
-#derive(Debug, Eq, Compare)
 pub(all) struct Rgb6 {
   r : Int32
   g : Int32
   b : Int32
-}
+} derive(Debug, Eq, Compare)
 
 ///|
 pub fn Rgb6::of_rgb(r : Int32, g : Int32, b : Int32) -> Rgb6 {
@@ -89,10 +87,9 @@ pub fn Rgb6::to_code(self : Rgb6) -> Int32 {
 
 ///|
 /// The grayscale subset of the codes under `38;5` and `48;5`, level in 0-23.
-#derive(Debug, Eq, Compare)
 pub(all) struct Gray24 {
   level : Int32
-}
+} derive(Debug, Eq, Compare)
 
 ///|
 pub fn Gray24::of_level(level : Int32) -> Gray24 {
@@ -117,12 +114,11 @@ pub fn Gray24::to_code(self : Gray24) -> Int32 {
 
 ///|
 /// True color, each channel in 0-255.
-#derive(Debug, Eq, Compare)
 pub(all) struct Rgb256 {
   r : Int32
   g : Int32
   b : Int32
-}
+} derive(Debug, Eq, Compare)
 
 ///|
 pub fn Rgb256::of_rgb(r : Int32, g : Int32, b : Int32) -> Rgb256 {
@@ -134,7 +130,6 @@ pub fn Rgb256::of_rgb(r : Int32, g : Int32, b : Int32) -> Rgb256 {
 }
 
 ///|
-#derive(Debug, Eq, Compare)
 pub(all) enum Color {
   Default
   Standard(Sgr8)
@@ -142,7 +137,7 @@ pub(all) enum Color {
   Rgb6(Rgb6)
   Gray24(Gray24)
   Rgb256(Rgb256)
-}
+} derive(Debug, Eq, Compare)
 
 ///|
 fn sgr8(code : Int32, bright~ : Bool = false) -> Color {

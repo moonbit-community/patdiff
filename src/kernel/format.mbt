@@ -1,10 +1,9 @@
 ///|
 /// Text placed before or after something, with how to style it.
-#derive(Debug, Eq)
 pub(all) struct Affix {
   text : Bytes
   styles : Array[@ansi_text.Attr]
-}
+} derive(Debug, Eq)
 
 ///|
 pub fn Affix::new(text : Bytes, styles~ : Array[@ansi_text.Attr] = []) -> Affix {
@@ -24,12 +23,11 @@ fn Affix::strip_styles(self : Affix) -> Affix {
 ///|
 /// How to render a piece of output: the content itself is styled with `styles`,
 /// between a prefix and a suffix.
-#derive(Debug, Eq)
 pub(all) struct Rule {
   pre : Affix
   suf : Affix
   styles : Array[@ansi_text.Attr]
-}
+} derive(Debug, Eq)
 
 ///|
 pub fn Rule::new(
@@ -67,7 +65,6 @@ pub fn Rule::use_prefix_text_from(self : Rule, this_prefix~ : Rule) -> Rule {
 
 ///|
 /// A rule for each kind of output.
-#derive(Debug, Eq)
 pub(all) struct Rules {
   line_same : Rule
   line_prev : Rule
@@ -87,7 +84,7 @@ pub(all) struct Rules {
   removed_in_move : Rule
   added_in_move : Rule
   line_unified_in_move : Rule
-}
+} derive(Debug, Eq)
 
 ///|
 pub(all) struct ColorPalette {
@@ -178,13 +175,12 @@ pub fn Rules::strip_styles(self : Rules) -> Rules {
 
 ///|
 /// Which line(s) a row of output came from, for `AnnotationGutter`.
-#derive(Debug, Eq)
 pub(all) enum GutterSide {
   Prev(line~ : Int32)
   Next(line~ : Int32)
   Same(prev~ : Int32, next~ : Int32)
   Unified(prev~ : Int32, next~ : Int32)
-}
+} derive(Debug, Eq)
 
 ///|
 /// A column rendered before the +/- diff gutter of each visible line.
@@ -215,13 +211,12 @@ pub fn AnnotationGutter::new(
 
 ///|
 /// How to format the location of a hunk.
-#derive(Debug, Eq)
 pub(all) enum LocationStyle {
   Diff
   Omake
   NoLocation
   Separator
-}
+} derive(Debug, Eq)
 
 ///|
 pub fn LocationStyle::all() -> Array[LocationStyle] {

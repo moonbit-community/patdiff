@@ -2,12 +2,11 @@
 /// Plain text together with what's needed to reason about its display width.
 /// `str` is stored as given even when it isn't valid UTF-8; `char_widths` is
 /// computed from its sanitized form.
-#derive(Debug, Eq)
 pub(all) struct Text {
   str : Bytes
   char_widths : Array[(Char, Int32)]
   width : Int32
-}
+} derive(Debug, Eq)
 
 ///|
 /// Decode the UTF-8 scalar at `i`, returning it with its encoded length.

@@ -14,11 +14,10 @@ pub(all) suberror SexpError {
 pub impl Show for SexpError
 
 // Types and methods
-#derive(Eq, @debug.Debug)
 pub(all) enum Sexp {
   Atom(Bytes)
   List(Array[Sexp])
-}
+} derive(Eq, @debug.Debug)
 pub fn Sexp::atom(StringView) -> Self
 pub fn Sexp::parse(Bytes) -> Self raise SexpError
 pub fn Sexp::to_bytes_hum(Self) -> Bytes

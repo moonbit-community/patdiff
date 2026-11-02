@@ -1,11 +1,10 @@
 ///|
 /// A style applied between two display columns.
-#derive(Debug, Eq)
 pub(all) struct StyleRange {
   start : Int32
   end : Int32
   style : Array[Attr]
-}
+} derive(Debug, Eq)
 
 ///|
 fn attr_key(attr : Attr) -> String {
@@ -165,11 +164,10 @@ pub fn style_ranges_split(
 ///|
 /// Text with its styles held separately, for applying styles to specific ranges
 /// or extracting the ranges patdiff applied.
-#derive(Debug, Eq)
 pub(all) struct TextWithStyleRanges {
   text : Text
   ranges : Array[StyleRange]
-}
+} derive(Debug, Eq)
 
 ///|
 pub fn TextWithStyleRanges::width(self : TextWithStyleRanges) -> Int32 {

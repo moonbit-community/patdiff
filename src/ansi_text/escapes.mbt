@@ -18,25 +18,22 @@ fn params_to_string(params : ArrayView[Int32?]) -> String {
 }
 
 ///|
-#derive(Debug, Eq)
 pub(all) enum ClearLine {
   ToLineEnd
   ToLineStart
   WholeLine
-}
+} derive(Debug, Eq)
 
 ///|
-#derive(Debug, Eq)
 pub(all) enum ClearScreen {
   ToScreenEnd
   ToScreenStart
   WholeScreen
   ScreenAndScrollback
-}
+} derive(Debug, Eq)
 
 ///|
 /// The Control Sequence Introducer commands recognized by this library.
-#derive(Debug, Eq)
 pub(all) enum Control {
   CursorUp(Int32?)
   CursorDown(Int32?)
@@ -51,7 +48,7 @@ pub(all) enum Control {
   ScrollUp(Int32?)
   ScrollDown(Int32?)
   Unknown(params~ : Array[Int32?], terminal~ : Char)
-}
+} derive(Debug, Eq)
 
 ///|
 fn Control::of_csi_params(params : Array[Int32?], terminal~ : Char) -> Control {
@@ -161,11 +158,10 @@ pub fn Control::to_string_hum(self : Control) -> String {
 
 ///|
 /// An OSC 8 terminal hyperlink marker.
-#derive(Debug, Eq)
 pub(all) enum Hyperlink {
   Start(Bytes)
   End
-}
+} derive(Debug, Eq)
 
 ///|
 pub fn Hyperlink::to_bytes(self : Hyperlink) -> Bytes {
@@ -184,19 +180,17 @@ pub fn Hyperlink::to_bytes_hum(self : Hyperlink) -> Bytes {
 }
 
 ///|
-#derive(Debug, Eq)
 pub(all) enum PrivateModeAction {
   Set
   Reset
-}
+} derive(Debug, Eq)
 
 ///|
 /// A DEC private mode sequence such as `ESC [ ? 25 h`.
-#derive(Debug, Eq)
 pub(all) struct PrivateMode {
   modes : Array[Int32]
   action : PrivateModeAction
-}
+} derive(Debug, Eq)
 
 ///|
 fn PrivateMode::of_csi_params(
@@ -244,20 +238,18 @@ pub fn PrivateMode::to_string_hum(self : PrivateMode) -> String {
 }
 
 ///|
-#derive(Debug, Eq)
 pub(all) enum OscCommand {
   SetTitle(Bytes)
   SetIconName(Bytes)
   SetWorkingDirectory(Bytes)
   Other(Bytes)
-}
+} derive(Debug, Eq)
 
 ///|
 /// An Operating System Command other than a hyperlink.
-#derive(Debug, Eq)
 pub(all) struct Osc {
   command : OscCommand
-}
+} derive(Debug, Eq)
 
 ///|
 fn Osc::of_payload(payload : Bytes) -> Osc {
@@ -294,19 +286,17 @@ pub fn Osc::to_bytes_hum(self : Osc) -> Bytes {
 }
 
 ///|
-#derive(Debug, Eq)
 pub(all) enum DsrQuery {
   DeviceStatus
   CursorPosition
   Other(Int32)
-}
+} derive(Debug, Eq)
 
 ///|
 /// A Device Status Report request.
-#derive(Debug, Eq)
 pub(all) struct Dsr {
   query : DsrQuery
-}
+} derive(Debug, Eq)
 
 ///|
 fn Dsr::of_params(params : ArrayView[Int32?]) -> Dsr? {
@@ -340,14 +330,13 @@ pub fn Dsr::to_string_hum(self : Dsr) -> String {
 ///|
 /// An escape sequence that isn't otherwise understood. `Csi` holds everything
 /// after `ESC [`.
-#derive(Debug, Eq)
 pub(all) enum UnknownEsc {
   Csi(Bytes)
   Fe(Byte)
   Fp(Byte)
   Nf(Bytes)
   Incomplete
-}
+} derive(Debug, Eq)
 
 ///|
 fn UnknownEsc::of_csi(
