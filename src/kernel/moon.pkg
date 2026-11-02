@@ -1,0 +1,10 @@
+import {
+  "moonbit-community/patdiff/ansi_text",
+  "moonbit-community/patdiff/internal/bstr",
+  "moonbit-community/patdiff/patience_diff" @pd,
+  "moonbitlang/core/cmp",
+  "moonbitlang/core/double",
+  "moonbitlang/core/string",
+}
+
+warnings = "-79"

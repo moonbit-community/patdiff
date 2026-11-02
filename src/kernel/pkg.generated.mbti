@@ -1,0 +1,275 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbit-community/patdiff/kernel"
+
+import {
+  "moonbit-community/patdiff/ansi_text",
+  "moonbit-community/patdiff/patience_diff",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub const DEFAULT_CONTEXT : Int32 = 16
+
+pub const DEFAULT_DOUBLE_COLUMN_WIDTH : Int32 = 121
+
+pub const DEFAULT_LINE_BIG_ENOUGH : Int32 = 3
+
+pub const DEFAULT_REFINE_LINE_LENGTH : Int32 = 78
+
+pub const DEFAULT_WORD_BIG_ENOUGH : Int32 = 7
+
+pub const TOO_SHORT_TO_SPLIT : Int32 = 2
+
+pub const WARN_IF_NO_TRAILING_NEWLINE_IN_BOTH_DEFAULT : Bool = true
+
+pub fn binary_different_message(config~ : Configuration, prev_file~ : FileName, prev_is_binary~ : Bool, next_file~ : FileName, next_is_binary~ : Bool) -> Bytes
+
+pub fn build_side_by_side(annotation_gutter? : AnnotationGutter, width_override? : Int32, include_line_numbers? : Bool, rules~ : Rules, wrap_or_truncate~ : WrapOrTruncate, output~ : Output, platform? : Platform, ArrayView[@patience_diff.Hunk[Array[(Tag, Bytes)]]]) -> Array[Array[(Bytes, Bytes)]]
+
+pub fn build_unified(annotation_gutter? : AnnotationGutter, rules~ : Rules, output~ : Output, ArrayView[@patience_diff.Hunk[Bytes]]) -> Array[Array[Bytes]]
+
+pub fn compare_lines(Configuration, prev~ : ArrayView[Bytes], next~ : ArrayView[Bytes]) -> ComparisonResult
+
+pub fn diff(context~ : Int32, line_big_enough~ : Int32, keep_ws~ : Bool, find_moves~ : Bool, prev~ : ArrayView[Bytes], next~ : ArrayView[Bytes]) -> Array[@patience_diff.Hunk[Bytes]]
+
+pub fn diff_strings(print_global_header? : Bool, platform? : Platform, Configuration, prev~ : DiffInput, next~ : DiffInput) -> Bytes?
+
+pub fn explode(ArrayView[Bytes], keep_ws~ : Bool) -> Array[Piece]
+
+pub fn filename_concat(Bytes, Bytes) -> Bytes
+
+pub fn find_moves(line_big_enough~ : Int32, keep_ws~ : Bool, ArrayView[@patience_diff.Hunk[Bytes]]) -> Array[@patience_diff.Hunk[Bytes]]
+
+pub fn float_tolerance_apply(ArrayView[@patience_diff.Hunk[Bytes]], Double, context~ : Int32) -> Array[@patience_diff.Hunk[Bytes]]
+
+pub fn hunks_to_lines(ArrayView[@patience_diff.Hunk[Array[(Tag, Bytes)]]]) -> Array[Array[LineInfo]]
+
+pub fn is_binary(Bytes) -> Bool
+
+pub fn is_binary_lines(ArrayView[Bytes]) -> Bool
+
+pub fn iter(f_hunk_break~ : (@patience_diff.Hunk[Bytes]) -> Unit, f_line~ : (Bytes) -> Unit, ArrayView[@patience_diff.Hunk[Bytes]]) -> Unit
+
+pub fn[A] iter_sides(f_hunk_break~ : (@patience_diff.Hunk[A]) -> Unit, f_line~ : (GutterSide) -> Unit, ArrayView[@patience_diff.Hunk[A]]) -> Unit
+
+pub fn iter_with_line_info(f_hunk_break~ : (@patience_diff.Hunk[Bytes]) -> Unit, f_line~ : (GutterSide, Bytes) -> Unit, ArrayView[@patience_diff.Hunk[Bytes]]) -> Unit
+
+pub fn lines_of_contents(Bytes) -> (Array[Bytes], Bool)
+
+pub fn output_to_string(print_global_header? : Bool, file_names~ : (FileName, FileName), rules~ : Rules, output~ : Output, location_style~ : LocationStyle, platform? : Platform, ArrayView[@patience_diff.Hunk[Bytes]]) -> Bytes
+
+pub fn output_to_string_side_by_side(annotation_gutter? : AnnotationGutter, width_override? : Int32, file_names~ : (FileName, FileName), rules~ : Rules, wrap_or_truncate~ : WrapOrTruncate, output~ : Output, platform? : Platform, ArrayView[@patience_diff.Hunk[Array[(Tag, Bytes)]]]) -> Bytes
+
+pub fn output_width(width_override? : Int32, platform? : Platform) -> Int32
+
+pub fn patdiff(context? : Int32, keep_ws? : Bool, find_moves? : Bool, rules? : Rules, output? : Output, produce_unified_lines? : Bool, split_long_lines? : Bool, print_global_header? : Bool, location_style? : LocationStyle, interleave? : Bool, float_tolerance? : Double, line_big_enough? : Int32, word_big_enough? : Int32, prev~ : DiffInput, next~ : DiffInput) -> Bytes
+
+pub fn print_side_by_side(annotation_gutter? : AnnotationGutter, width_override? : Int32, file_names? : (FileName, FileName), rules~ : Rules, wrap_or_truncate~ : WrapOrTruncate, output~ : Output, print~ : (Bytes) -> Unit, platform? : Platform, ArrayView[@patience_diff.Hunk[Array[(Tag, Bytes)]]]) -> Unit
+
+pub fn print_unified(print_global_header? : Bool, file_names~ : (FileName, FileName), rules~ : Rules, output~ : Output, print~ : (Bytes) -> Unit, location_style~ : LocationStyle, platform? : Platform, ArrayView[@patience_diff.Hunk[Bytes]]) -> Unit
+
+pub fn refine(rules~ : Rules, produce_unified_lines~ : Bool, output~ : Output, keep_ws~ : Bool, split_long_lines~ : Bool, interleave~ : Bool, word_big_enough~ : Int32, ArrayView[@patience_diff.Hunk[Bytes]]) -> Array[@patience_diff.Hunk[Bytes]]
+
+pub fn refine_structured(mark_newline_changes? : Bool, produce_unified_lines~ : Bool, keep_ws~ : Bool, split_long_lines~ : Bool, interleave~ : Bool, word_big_enough~ : Int32, ArrayView[@patience_diff.Hunk[Bytes]]) -> Array[@patience_diff.Hunk[Array[(Tag, Bytes)]]]
+
+pub fn remove_ws(Bytes) -> Bytes
+
+pub fn should_keep_whitespace(prev~ : DiffInput, next~ : DiffInput) -> Bool
+
+pub fn should_keep_whitespace_lines(prev~ : (Bytes, ArrayView[Bytes]), next~ : (Bytes, ArrayView[Bytes])) -> Bool
+
+pub fn time_to_string_utc(Double) -> String
+
+pub fn unrefined_structured(ArrayView[@patience_diff.Hunk[Bytes]]) -> Array[@patience_diff.Hunk[Array[(Tag, Bytes)]]]
+
+pub fn warn_if_no_trailing_newline(warn_if_no_trailing_newline_in_both~ : Bool, warn~ : (Bytes) -> Unit, prev~ : (Bool, Bytes), next~ : (Bool, Bytes)) -> Unit
+
+// Errors
+
+// Types and methods
+pub(all) struct Affix {
+  text : Bytes
+  styles : Array[@ansi_text.Attr]
+} derive(Eq, @debug.Debug)
+pub fn Affix::blank() -> Self
+pub fn Affix::new(Bytes, styles? : Array[@ansi_text.Attr]) -> Self
+
+pub(all) struct AnnotationGutter {
+  width : Int32
+  render : (GutterSide) -> Bytes
+}
+pub fn AnnotationGutter::empty() -> Self
+pub fn AnnotationGutter::new(width~ : Int32, render~ : (GutterSide) -> Bytes) -> Self
+
+pub(all) struct ColorPalette {
+  added : @ansi_text.Color
+  removed : @ansi_text.Color
+  moved_from_prev : @ansi_text.Color
+  moved_to_next : @ansi_text.Color
+}
+pub fn ColorPalette::default() -> Self
+
+pub(all) enum ComparisonResult {
+  BinarySame
+  BinaryDifferent(prev_is_binary~ : Bool, next_is_binary~ : Bool)
+  Hunks(Array[@patience_diff.Hunk[Bytes]])
+  StructuredHunks(Array[@patience_diff.Hunk[Array[(Tag, Bytes)]]])
+}
+pub fn ComparisonResult::has_no_diff(Self) -> Bool
+pub fn ComparisonResult::new(Configuration, prev~ : DiffInput, next~ : DiffInput, compare_assuming_text~ : (Configuration, DiffInput, DiffInput) -> Self) -> Self
+
+pub(all) struct Configuration {
+  output : Output
+  rules : Rules
+  float_tolerance : Double?
+  produce_unified_lines : Bool
+  unrefined : Bool
+  keep_ws : Bool
+  find_moves : Bool
+  split_long_lines : Bool
+  interleave : Bool
+  assume_text : Bool
+  context : Int32
+  line_big_enough : Int32
+  word_big_enough : Int32
+  shallow : Bool
+  quiet : Bool
+  double_check : Bool
+  mask_uniques : Bool
+  prev_alt : Bytes?
+  next_alt : Bytes?
+  location_style : LocationStyle
+  warn_if_no_trailing_newline_in_both : Bool
+  side_by_side : WrapOrTruncate?
+  width_override : Int32?
+} derive(Eq, @debug.Debug)
+pub fn Configuration::check(Self) -> Self
+pub fn Configuration::default() -> Self
+pub fn Configuration::override_with(Self, output? : Output, rules? : Rules, float_tolerance? : Double?, produce_unified_lines? : Bool, unrefined? : Bool, keep_ws? : Bool, find_moves? : Bool, split_long_lines? : Bool, interleave? : Bool, assume_text? : Bool, context? : Int32, line_big_enough? : Int32, word_big_enough? : Int32, shallow? : Bool, quiet? : Bool, double_check? : Bool, mask_uniques? : Bool, prev_alt? : Bytes?, next_alt? : Bytes?, location_style? : LocationStyle, warn_if_no_trailing_newline_in_both? : Bool, side_by_side? : WrapOrTruncate?, width_override? : Int32?) -> Self
+
+pub(all) struct DiffInput {
+  name : Bytes
+  text : Bytes
+} derive(Eq, @debug.Debug)
+pub fn DiffInput::of_string(StringView, StringView) -> Self
+
+pub(all) enum FileName {
+  Real(real_name~ : Bytes, alt_name~ : Bytes?)
+  Fake(Bytes)
+} derive(Eq, @debug.Debug)
+pub fn FileName::append(Self, Bytes) -> Self
+pub fn FileName::dev_null() -> Self
+pub fn FileName::display_name(Self) -> Bytes
+pub fn FileName::real_name(Self) -> Bytes
+
+pub(all) enum GutterSide {
+  Prev(line~ : Int32)
+  Next(line~ : Int32)
+  Same(prev~ : Int32, next~ : Int32)
+  Unified(prev~ : Int32, next~ : Int32)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Line {
+  line_number : Int32?
+  contents : Array[(Tag, Array[@ansi_text.Element])]
+} derive(Eq, @debug.Debug)
+pub fn Line::any_non_same(Self) -> Bool
+pub fn Line::styled_string(Self, output? : Output, style~ : (Tag, Bytes) -> Bytes) -> Bytes
+pub fn Line::to_bytes(Self) -> Bytes
+pub fn Line::truncate(Self, width~ : Int32) -> Self
+pub fn Line::width(Self) -> Int32
+pub fn Line::wrap(Self, width~ : Int32) -> Array[Self]
+
+pub(all) enum LineInfo {
+  Same(Line, Line)
+  Prev(Line, Int32?)
+  Next(Line, Int32?)
+} derive(Eq, @debug.Debug)
+pub fn LineInfo::lines(Self) -> (Line, Line)
+pub fn LineInfo::numbers(Self) -> (Int32?, Int32?)
+pub fn LineInfo::truncate(Self, width~ : Int32) -> Self
+pub fn LineInfo::wrap(Self, width~ : Int32) -> Array[Self]
+
+pub(all) enum LocationStyle {
+  Diff
+  Omake
+  NoLocation
+  Separator
+} derive(Eq, @debug.Debug)
+pub fn LocationStyle::all() -> Array[Self]
+pub fn LocationStyle::of_string(String) -> Self?
+pub fn LocationStyle::to_string(Self) -> String
+
+pub(all) enum Output {
+  Ansi
+  Ascii
+  Html
+} derive(Eq, @debug.Debug)
+pub fn Output::implies_unrefined(Self) -> Bool
+
+pub(all) enum Piece {
+  Newline(Int32, Bytes?)
+  Word(Bytes)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Platform {
+  mtime : (FileName) -> Double?
+  console_width : () -> Int32?
+  am_running_test : Bool
+}
+pub fn Platform::without_unix() -> Self
+
+pub(all) struct Rule {
+  pre : Affix
+  suf : Affix
+  styles : Array[@ansi_text.Attr]
+} derive(Eq, @debug.Debug)
+pub fn Rule::blank() -> Self
+pub fn Rule::new(pre? : Affix, suf? : Affix, Array[@ansi_text.Attr]) -> Self
+pub fn Rule::strip_prefix(Self) -> Self
+pub fn Rule::strip_styles(Self) -> Self
+pub fn Rule::unstyled_prefix(Bytes) -> Self
+pub fn Rule::use_prefix_text_from(Self, this_prefix~ : Self) -> Self
+
+pub(all) struct Rules {
+  line_same : Rule
+  line_prev : Rule
+  line_next : Rule
+  line_unified : Rule
+  word_same_prev : Rule
+  word_same_next : Rule
+  word_same_unified : Rule
+  word_same_unified_in_move : Rule
+  word_prev : Rule
+  word_next : Rule
+  hunk : Rule
+  header_prev : Rule
+  header_next : Rule
+  moved_from_prev : Rule
+  moved_to_next : Rule
+  removed_in_move : Rule
+  added_in_move : Rule
+  line_unified_in_move : Rule
+} derive(Eq, @debug.Debug)
+pub fn Rules::default() -> Self
+pub fn Rules::strip_styles(Self) -> Self
+pub fn Rules::with_color_palette(ColorPalette) -> Self
+
+pub(all) enum Tag {
+  Prev
+  Same
+  Next
+} derive(Eq, @debug.Debug)
+
+pub(all) enum WrapOrTruncate {
+  Wrap
+  Truncate
+  Neither
+} derive(Eq, @debug.Debug)
+
+// Type aliases
+pub type Hunks = Array[@patience_diff.Hunk[Bytes]]
+
+pub type StructuredHunk = @patience_diff.Hunk[Array[(Tag, Bytes)]]
+
+// Traits
