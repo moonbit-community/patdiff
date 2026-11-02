@@ -14,7 +14,7 @@ fn DiskAffix::get_text(self : DiskAffix) -> Bytes {
 }
 
 ///|
-fn DiskAffix::to_internal(self : DiskAffix, min_width~ : Int) -> Affix {
+fn DiskAffix::to_internal(self : DiskAffix, min_width~ : Int32) -> Affix {
   Affix::new(
     @bstr.pad_left(self.get_text(), min_width),
     styles=self.style.unwrap_or([]),
@@ -30,14 +30,16 @@ pub(all) struct DiskRule {
 
 ///|
 fn DiskRule::blank() -> DiskRule {
-  { prefix: None, suffix: None, style: None }
+  { prefix: None, suffix: None, style: None, }
 }
 
 ///|
 fn DiskRule::to_internal(self : DiskRule) -> Rule {
-  let affix_of = (opt : DiskAffix?) => match opt {
-    Some(affix) => affix.to_internal(min_width=0)
-    None => Affix::blank()
+  let affix_of = (opt : DiskAffix?) => {
+    match opt {
+      Some(affix) => affix.to_internal(min_width=0)
+      None => Affix::blank()
+    }
   }
   Rule::new(
     pre=affix_of(self.prefix),
@@ -62,7 +64,7 @@ fn line_rule(
   word_same? : Array[@ansi_text.Attr],
 ) -> DiskLineRule {
   {
-    prefix: Some({ text: Some(text), style: Some(prefix_style) }),
+    prefix: Some({ text: Some(text), style: Some(prefix_style), }),
     suffix: None,
     style,
     word_same,
@@ -76,12 +78,9 @@ fn line_same_default() -> DiskLineRule {
 
 ///|
 fn line_old_default() -> DiskLineRule {
-  line_rule(
-    b"-|",
-    black_on(Standard(Red)),
-    style=[Fg(Standard(Red))],
-    word_same=[Fg(Gray24(@ansi_text.Gray24::of_level(12)))],
-  )
+  line_rule(b"-|", black_on(Standard(Red)), style=[Fg(Standard(Red))], word_same=[
+    Fg(Gray24(@ansi_text.Gray24::of_level(12))),
+  ])
 }
 
 ///|
@@ -145,9 +144,9 @@ pub(all) struct OnDisk {
   dont_produce_unified_lines : Bool?
   dont_overwrite_word_old_word_new : Bool?
   config_path : Bytes?
-  context : Int?
-  line_big_enough : Int?
-  word_big_enough : Int?
+  context : Int32?
+  line_big_enough : Int32?
+  word_big_enough : Int32?
   keep_whitespace : Bool?
   find_moves : Bool?
   split_long_lines : Bool?
@@ -176,14 +175,14 @@ pub(all) struct OnDisk {
   word_new : DiskRule?
   location_style : LocationStyle
   warn_if_no_trailing_newline_in_both : Bool
-  width_override : Int?
+  width_override : Int32?
 } derive(Debug, Eq)
 
 // Reading s-expressions.
 
 ///|
 fn sexp_error(msg : String) -> @sexp.SexpError {
-  @sexp.SexpError(msg)
+  SexpError(msg)
 }
 
 ///|
@@ -199,7 +198,7 @@ fn bytes_of_sexp(sexp : @sexp.Sexp) -> Bytes raise @sexp.SexpError {
 }
 
 ///|
-fn int_of_sexp(sexp : @sexp.Sexp) -> Int raise @sexp.SexpError {
+fn int_of_sexp(sexp : @sexp.Sexp) -> Int32 raise @sexp.SexpError {
   let text = atom_text(sexp)
   @string.parse_int(text) catch {
     _ => raise sexp_error("expected an int, got \{text}")
@@ -292,7 +291,9 @@ fn sgr8_of_sexp(sexp : @sexp.Sexp) -> @ansi_text.Sgr8 raise @sexp.SexpError {
 }
 
 ///|
-fn rgb_of_sexp(sexp : @sexp.Sexp) -> (Int, Int, Int) raise @sexp.SexpError {
+fn rgb_of_sexp(
+  sexp : @sexp.Sexp,
+) -> (Int32, Int32, Int32) raise @sexp.SexpError {
   let fields = record_fields(sexp, ["r", "g", "b"])
   (
     required_field(fields, "r", int_of_sexp),
@@ -303,19 +304,21 @@ fn rgb_of_sexp(sexp : @sexp.Sexp) -> (Int, Int, Int) raise @sexp.SexpError {
 
 ///|
 fn gray24_of_sexp(sexp : @sexp.Sexp) -> @ansi_text.Gray24 raise @sexp.SexpError {
-  { level: required_field(record_fields(sexp, ["level"]), "level", int_of_sexp) }
+  {
+    level: required_field(record_fields(sexp, ["level"]), "level", int_of_sexp),
+  }
 }
 
 ///|
 fn rgb6_of_sexp(sexp : @sexp.Sexp) -> @ansi_text.Rgb6 raise @sexp.SexpError {
   let (r, g, b) = rgb_of_sexp(sexp)
-  { r, g, b }
+  { r, g, b, }
 }
 
 ///|
 fn rgb256_of_sexp(sexp : @sexp.Sexp) -> @ansi_text.Rgb256 raise @sexp.SexpError {
   let (r, g, b) = rgb_of_sexp(sexp)
-  { r, g, b }
+  { r, g, b, }
 }
 
 ///|
@@ -441,8 +444,12 @@ fn attr_of_sexp(sexp : @sexp.Sexp) -> @ansi_text.Attr raise @sexp.SexpError {
 }
 
 ///|
-fn style_of_sexp(sexp : @sexp.Sexp) -> Array[@ansi_text.Attr] raise @sexp.SexpError {
-  guard sexp is List(items) else { raise sexp_error("expected a list of styles") }
+fn style_of_sexp(
+  sexp : @sexp.Sexp,
+) -> Array[@ansi_text.Attr] raise @sexp.SexpError {
+  guard sexp is List(items) else {
+    raise sexp_error("expected a list of styles")
+  }
   let attrs = []
   for item in items {
     attrs.push(attr_of_sexp(item))
@@ -481,7 +488,9 @@ fn line_rule_of_sexp(sexp : @sexp.Sexp) -> DiskLineRule raise @sexp.SexpError {
 }
 
 ///|
-fn location_style_of_sexp(sexp : @sexp.Sexp) -> LocationStyle raise @sexp.SexpError {
+fn location_style_of_sexp(
+  sexp : @sexp.Sexp,
+) -> LocationStyle raise @sexp.SexpError {
   match constructor_name(atom_text(sexp)) {
     "Diff" => Diff
     "Omake" => Omake
@@ -520,8 +529,7 @@ let common_fields : ReadOnlyArray[String] = [
   "context", "line_big_enough", "word_big_enough", "keep_whitespace", "split_long_lines",
   "interleave", "assume_text", "quiet", "shallow", "double_check", "mask_uniques",
   "alt_old", "alt_new", "header_old", "header_new", "hunk", "line_same", "line_old",
-  "line_new", "line_unified", "word_old", "word_new", "location_style",
-  "warn_if_no_trailing_newline_in_both",
+  "line_new", "line_unified", "word_old", "word_new", "location_style", "warn_if_no_trailing_newline_in_both",
 ]
 
 ///|
@@ -620,7 +628,9 @@ fn OnDisk::of_sexp_v2(sexp : @sexp.Sexp) -> OnDisk raise @sexp.SexpError {
 fn OnDisk::of_sexp_v1(sexp : @sexp.Sexp) -> OnDisk raise @sexp.SexpError {
   let fields = record_fields(sexp, with_fields(["unrefined", "html"]))
   let html = optional_field(fields, "html", bool_of_sexp).unwrap_or(false)
-  let unrefined = optional_field(fields, "unrefined", bool_of_sexp).unwrap_or(false)
+  let unrefined = optional_field(fields, "unrefined", bool_of_sexp).unwrap_or(
+    false,
+  )
   let output = match (html, unrefined) {
     (true, true) => OUnrefinedHtml
     (true, false) => OHtml
@@ -636,8 +646,7 @@ fn OnDisk::of_sexp_v0(sexp : @sexp.Sexp) -> OnDisk raise @sexp.SexpError {
     "config_path", "context", "line_big_enough", "word_big_enough", "unrefined",
     "keep_whitespace", "split_long_lines", "interleave", "assume_text", "shallow",
     "quiet", "double_check", "hide_uniques", "header", "line_same", "line_same_prefix",
-    "line_changed", "word_same", "word_changed", "chunk", "location_style",
-    "warn_if_no_trailing_newline_in_both",
+    "line_changed", "word_same", "word_changed", "chunk", "location_style", "warn_if_no_trailing_newline_in_both",
   ])
   let style_or_none = (sexp : @sexp.Sexp) => style_of_sexp(sexp)
   let header = match fields.get("header") {
@@ -664,10 +673,12 @@ fn OnDisk::of_sexp_v0(sexp : @sexp.Sexp) -> OnDisk raise @sexp.SexpError {
     None => None
     Some(sexp) => {
       let word_same = record_fields(sexp, ["style_old", "style_new"])
-      Some((
-        required_field(word_same, "style_old", style_of_sexp),
-        required_field(word_same, "style_new", style_of_sexp),
-      ))
+      Some(
+        (
+          required_field(word_same, "style_old", style_of_sexp),
+          required_field(word_same, "style_new", style_of_sexp),
+        ),
+      )
     }
   }
   let word_changed = match fields.get("word_changed") {
@@ -681,33 +692,40 @@ fn OnDisk::of_sexp_v0(sexp : @sexp.Sexp) -> OnDisk raise @sexp.SexpError {
       let _ = optional_field(word_changed, "suffix_old", affix_of_sexp)
       let _ = optional_field(word_changed, "prefix_new", affix_of_sexp)
       let _ = optional_field(word_changed, "suffix_new", affix_of_sexp)
-      Some((
-        required_field(word_changed, "style_old", style_of_sexp),
-        required_field(word_changed, "style_new", style_of_sexp),
-      ))
+      Some(
+        (
+          required_field(word_changed, "style_old", style_of_sexp),
+          required_field(word_changed, "style_new", style_of_sexp),
+        ),
+      )
     }
   }
   let line_changed = match fields.get("line_changed") {
     None => None
     Some(sexp) => {
       let line_changed = record_fields(sexp, ["prefix_old", "prefix_new"])
-      Some((
-        required_field(line_changed, "prefix_old", affix_of_sexp),
-        required_field(line_changed, "prefix_new", affix_of_sexp),
-      ))
+      Some(
+        (
+          required_field(line_changed, "prefix_old", affix_of_sexp),
+          required_field(line_changed, "prefix_new", affix_of_sexp),
+        ),
+      )
     }
   }
   let same_old = word_same.map(pair => pair.0)
   let same_new = word_same.map(pair => pair.1)
-  let unrefined = optional_field(fields, "unrefined", bool_of_sexp).unwrap_or(false)
+  let unrefined = optional_field(fields, "unrefined", bool_of_sexp).unwrap_or(
+    false,
+  )
   // The fields with the same name in newer formats have other meanings here, so
   // they are only read through `of_v0`.
   let shared = Map([])
-  for name in [
-    "config_path", "context", "line_big_enough", "word_big_enough", "keep_whitespace",
-    "split_long_lines", "interleave", "assume_text", "shallow", "quiet", "double_check",
-    "location_style", "warn_if_no_trailing_newline_in_both",
-  ] {
+  for
+    name in [
+      "config_path", "context", "line_big_enough", "word_big_enough", "keep_whitespace",
+      "split_long_lines", "interleave", "assume_text", "shallow", "quiet", "double_check",
+      "location_style", "warn_if_no_trailing_newline_in_both",
+    ] {
     if fields.get(name) is Some(sexp) {
       shared[name] = sexp
     }
@@ -804,47 +822,50 @@ pub fn OnDisk::to_configuration(self : OnDisk) -> Configuration {
   )
   // Padding for prefixes: they should all be the same length.
   let mut min_width = 0
-  for line in [
-    line_same, line_prev, line_next, line_unified, line_from_prev, line_to_next,
-    line_removed_in_move, line_added_in_move,
-  ] {
+  for
+    line in [
+      line_same, line_prev, line_next, line_unified, line_from_prev, line_to_next,
+      line_removed_in_move, line_added_in_move,
+    ] {
     if line.prefix is Some(prefix) {
       min_width = @cmp.maximum(min_width, prefix.get_text().length())
     }
   }
-  let create_line = (line : DiskLineRule) => Rule::new(
-    line.style.unwrap_or([]),
-    pre=line.prefix
-      .unwrap_or({ text: None, style: None })
-      .to_internal(min_width~),
-  )
-  let create_word_same = (line : DiskLineRule) => Rule::new(
-    line.word_same.unwrap_or([]),
-  )
+  let create_line = (line : DiskLineRule) => {
+    Rule::new(
+      line.style.unwrap_or([]),
+      pre=line.prefix
+        .unwrap_or({ text: None, style: None, })
+        .to_internal(min_width~),
+    )
+  }
+  let create_word_same = (line : DiskLineRule) => {
+    Rule::new(line.word_same.unwrap_or([]))
+  }
   let overwrite = !self.dont_overwrite_word_old_word_new.unwrap_or(false)
   let create_word = (line_rule : DiskLineRule, opt : DiskRule?) => {
     if overwrite {
-      DiskRule::{ ..DiskRule::blank(), style: line_rule.style }.to_internal()
+      DiskRule::{ ..DiskRule::blank(), style: line_rule.style, }.to_internal()
     } else {
       opt.unwrap_or(DiskRule::blank()).to_internal()
     }
   }
   let create_header = (rule : DiskRule?, prefix : Bytes) => {
     let rule = rule.unwrap_or(DiskRule::blank())
-    let affix = rule.prefix.unwrap_or({ text: None, style: None })
+    let affix = rule.prefix.unwrap_or({ text: None, style: None, })
     DiskRule::{
       ..rule,
-      prefix: Some({ ..affix, text: Some(affix.text.unwrap_or(prefix)) }),
+      prefix: Some({ ..affix, text: Some(affix.text.unwrap_or(prefix)), }),
     }.to_internal()
   }
   let hunk_rule = {
     let rule = self.hunk.unwrap_or(DiskRule::blank())
-    let prefix = rule.prefix.unwrap_or({ text: None, style: None })
-    let suffix = rule.suffix.unwrap_or({ text: None, style: None })
+    let prefix = rule.prefix.unwrap_or({ text: None, style: None, })
+    let suffix = rule.suffix.unwrap_or({ text: None, style: None, })
     DiskRule::{
       ..rule,
-      prefix: Some({ ..prefix, text: Some(prefix.text.unwrap_or(b"@@ ")) }),
-      suffix: Some({ ..suffix, text: Some(suffix.text.unwrap_or(b" @@")) }),
+      prefix: Some({ ..prefix, text: Some(prefix.text.unwrap_or(b"@@ ")), }),
+      suffix: Some({ ..suffix, text: Some(suffix.text.unwrap_or(b" @@")), }),
     }.to_internal()
   }
   let output : Output = match self.output {
@@ -913,7 +934,7 @@ fn sgr8_to_sexp(c : @ansi_text.Sgr8) -> @sexp.Sexp {
 }
 
 ///|
-fn int_to_sexp(n : Int) -> @sexp.Sexp {
+fn int_to_sexp(n : Int32) -> @sexp.Sexp {
   @sexp.Sexp::atom(n.to_string())
 }
 
@@ -923,7 +944,7 @@ fn sexp_field(name : String, value : @sexp.Sexp) -> @sexp.Sexp {
 }
 
 ///|
-fn rgb_to_sexp(r : Int, g : Int, b : Int) -> @sexp.Sexp {
+fn rgb_to_sexp(r : Int32, g : Int32, b : Int32) -> @sexp.Sexp {
   List([
     sexp_field("r", int_to_sexp(r)),
     sexp_field("g", int_to_sexp(g)),
@@ -937,10 +958,10 @@ fn color_to_sexp(color : @ansi_text.Color) -> @sexp.Sexp {
     Default => @sexp.Sexp::atom("Default")
     Standard(c) => sexp_field("Standard", sgr8_to_sexp(c))
     Bright(c) => sexp_field("Bright", sgr8_to_sexp(c))
-    Rgb6({ r, g, b }) => sexp_field("Rgb6", rgb_to_sexp(r, g, b))
-    Gray24({ level }) =>
+    Rgb6({ r, g, b, }) => sexp_field("Rgb6", rgb_to_sexp(r, g, b))
+    Gray24({ level, }) =>
       sexp_field("Gray24", List([sexp_field("level", int_to_sexp(level))]))
-    Rgb256({ r, g, b }) => sexp_field("Rgb256", rgb_to_sexp(r, g, b))
+    Rgb256({ r, g, b, }) => sexp_field("Rgb256", rgb_to_sexp(r, g, b))
   }
 }
 
@@ -983,7 +1004,7 @@ fn[A] add_field(
 ///|
 fn affix_to_sexp(affix : DiskAffix) -> @sexp.Sexp {
   let fields = []
-  add_field(fields, "text", affix.text, s => @sexp.Atom(s))
+  add_field(fields, "text", affix.text, s => Atom(s))
   add_field(fields, "style", affix.style, s => style_to_sexp(s))
   List(fields)
 }
@@ -1028,9 +1049,17 @@ fn location_style_to_sexp(style : LocationStyle) -> @sexp.Sexp {
 pub fn OnDisk::to_sexp(self : OnDisk) -> @sexp.Sexp {
   let fields = []
   let bytes_sexp = (s : Bytes) => @sexp.Atom(s)
-  add_field(fields, "dont_produce_unified_lines", self.dont_produce_unified_lines, bool_to_sexp)
   add_field(
-    fields, "dont_overwrite_word_old_word_new", self.dont_overwrite_word_old_word_new, bool_to_sexp,
+    fields,
+    "dont_produce_unified_lines",
+    self.dont_produce_unified_lines,
+    bool_to_sexp,
+  )
+  add_field(
+    fields,
+    "dont_overwrite_word_old_word_new",
+    self.dont_overwrite_word_old_word_new,
+    bool_to_sexp,
   )
   add_field(fields, "config_path", self.config_path, bytes_sexp)
   add_field(fields, "context", self.context, int_to_sexp)
@@ -1050,9 +1079,13 @@ pub fn OnDisk::to_sexp(self : OnDisk) -> @sexp.Sexp {
     OAscii => fields.push(sexp_field("output", @sexp.Sexp::atom("ascii")))
     OHtml => fields.push(sexp_field("output", @sexp.Sexp::atom("html")))
     OUnrefinedAnsi =>
-      fields.push(sexp_field("output", sexp_field("unrefined", @sexp.Sexp::atom("ansi"))))
+      fields.push(
+        sexp_field("output", sexp_field("unrefined", @sexp.Sexp::atom("ansi"))),
+      )
     OUnrefinedHtml =>
-      fields.push(sexp_field("output", sexp_field("unrefined", @sexp.Sexp::atom("html"))))
+      fields.push(
+        sexp_field("output", sexp_field("unrefined", @sexp.Sexp::atom("html"))),
+      )
     OSideBySide(wrap_or_truncate) => {
       let name = if wrap_or_truncate is Truncate { "truncate" } else { "wrap" }
       fields.push(
@@ -1071,13 +1104,30 @@ pub fn OnDisk::to_sexp(self : OnDisk) -> @sexp.Sexp {
   add_field(fields, "line_unified", self.line_unified, line_rule_to_sexp)
   add_field(fields, "line_from_old", self.line_from_old, line_rule_to_sexp)
   add_field(fields, "line_to_new", self.line_to_new, line_rule_to_sexp)
-  add_field(fields, "line_removed_in_move", self.line_removed_in_move, line_rule_to_sexp)
-  add_field(fields, "line_added_in_move", self.line_added_in_move, line_rule_to_sexp)
-  add_field(fields, "line_unified_in_move", self.line_unified_in_move, line_rule_to_sexp)
+  add_field(
+    fields,
+    "line_removed_in_move",
+    self.line_removed_in_move,
+    line_rule_to_sexp,
+  )
+  add_field(
+    fields,
+    "line_added_in_move",
+    self.line_added_in_move,
+    line_rule_to_sexp,
+  )
+  add_field(
+    fields,
+    "line_unified_in_move",
+    self.line_unified_in_move,
+    line_rule_to_sexp,
+  )
   add_field(fields, "word_old", self.word_old, rule_to_sexp)
   add_field(fields, "word_new", self.word_new, rule_to_sexp)
   if self.location_style != Diff {
-    fields.push(sexp_field("location_style", location_style_to_sexp(self.location_style)))
+    fields.push(
+      sexp_field("location_style", location_style_to_sexp(self.location_style)),
+    )
   }
   if self.warn_if_no_trailing_newline_in_both !=
     WARN_IF_NO_TRAILING_NEWLINE_IN_BOTH_DEFAULT {
@@ -1095,9 +1145,13 @@ pub fn OnDisk::to_sexp(self : OnDisk) -> @sexp.Sexp {
 ///|
 /// The text of the default configuration file.
 pub fn default_config_string() -> Bytes {
-  let rule = (line_rule : DiskLineRule) => line_rule_to_sexp(line_rule).to_bytes_mach()
+  let rule = (line_rule : DiskLineRule) => {
+    line_rule_to_sexp(line_rule).to_bytes_mach()
+  }
   @bstr.concat([
-    @bstr.of_string(";; -*- scheme -*-\n;; patdiff Configuration file\n\n(\n (context \{DEFAULT_CONTEXT})\n\n (line_same "),
+    @bstr.of_string(
+      ";; -*- scheme -*-\n;; patdiff Configuration file\n\n(\n (context \{DEFAULT_CONTEXT})\n\n (line_same ",
+    ),
     rule(line_same_default()),
     b")\n\n (line_old ",
     rule(line_old_default()),
@@ -1162,9 +1216,7 @@ pub fn light_bg_configuration() -> Configuration {
 
 ///|
 fn configuration_of_v0(text : String) -> Configuration {
-  let parsed = try {
-    OnDisk::of_sexp_v0(@sexp.Sexp::parse(@bstr.of_string(text)))
-  } catch {
+  let parsed = OnDisk::of_sexp_v0(@sexp.Sexp::parse(@bstr.of_string(text))) catch {
     err => abort("invalid built-in configuration: \{err}")
   }
   parsed.to_configuration()

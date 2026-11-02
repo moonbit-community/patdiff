@@ -1,15 +1,15 @@
 ///|
 /// A contiguous run of elements that is identical in `prev` and `next`.
 pub(all) struct MatchingBlock {
-  prev_start : Int
-  next_start : Int
-  length : Int
+  prev_start : Int32
+  next_start : Int32
+  length : Int32
 } derive(Debug, Eq)
 
 ///|
 /// Identifies one detected move. Ids are small, dense and allocated in the
 /// order the moves are found.
-pub type MoveId = Int
+pub type MoveId = Int32
 
 ///|
 /// How a line in a `Prev` or `Next` range takes part in a move.
@@ -68,7 +68,8 @@ pub fn[A] Range::prev_and_next(
     // `Next`.
     Prev(_, Some(WithinMove(_))) => ([], [])
     Next(_, _) => ([], [self])
-    Replace(l_range, r_range, None) => ([Prev(l_range, None)], [Next(r_range, None)])
+    Replace(l_range, r_range, None) =>
+      ([Prev(l_range, None)], [Next(r_range, None)])
     // Don't include `Replace`s for the same reason as a `Prev` within a move.
     Replace(_, r_range, Some(move_id)) =>
       ([], [Next(r_range, Some(WithinMove(move_id)))])
@@ -98,7 +99,7 @@ pub fn[A] next_only(ranges : ArrayView[Range[A]]) -> Array[Range[A]] {
 }
 
 ///|
-pub fn[A] Range::prev_size(self : Range[A]) -> Int {
+pub fn[A] Range::prev_size(self : Range[A]) -> Int32 {
   match self {
     Unified(lines, None)
     | Replace(lines, _, None)
@@ -106,13 +107,15 @@ pub fn[A] Range::prev_size(self : Range[A]) -> Int {
     Same(lines) => lines.length()
     // Don't include `Prev`s that are within moves as they are conceptually
     // `Next`s.
-    Replace(_, _, Some(_)) | Prev(_, Some(WithinMove(_))) | Next(_, _) | Unified(_, Some(_)) =>
-      0
+    Replace(_, _, Some(_))
+    | Prev(_, Some(WithinMove(_)))
+    | Next(_, _)
+    | Unified(_, Some(_)) => 0
   }
 }
 
 ///|
-pub fn[A] Range::next_size(self : Range[A]) -> Int {
+pub fn[A] Range::next_size(self : Range[A]) -> Int32 {
   match self {
     Unified(lines, _) | Replace(_, lines, _) | Next(lines, _) => lines.length()
     Same(lines) => lines.length()
@@ -123,10 +126,10 @@ pub fn[A] Range::next_size(self : Range[A]) -> Int {
 ///|
 /// A group of ranges, with one-based start lines.
 pub(all) struct Hunk[A] {
-  prev_start : Int
-  prev_size : Int
-  next_start : Int
-  next_size : Int
+  prev_start : Int32
+  prev_size : Int32
+  next_start : Int32
+  next_size : Int32
   ranges : Array[Range[A]]
 } derive(Debug, Eq)
 
@@ -158,18 +161,22 @@ pub fn[A, B] concat_map_ranges(
   hunks : ArrayView[Hunk[A]],
   f : (Range[A]) -> Array[Range[B]],
 ) -> Array[Hunk[B]] {
-  [ for hunk in hunks => hunk.concat_map(f) ]
+  [
+    for hunk in hunks => hunk.concat_map(f)
+  ]
 }
 
 ///|
 /// Split each `Replace` into a `Prev` followed by a `Next`.
 pub fn[A] unified(hunks : ArrayView[Hunk[A]]) -> Array[Hunk[A]] {
-  concat_map_ranges(hunks, range => match range {
-    Replace(l_range, r_range, move_id) => {
-      let move_kind = within_move(move_id)
-      [Prev(l_range, move_kind), Next(r_range, move_kind)]
+  concat_map_ranges(hunks, range => {
+    match range {
+      Replace(l_range, r_range, move_id) => {
+        let move_kind = within_move(move_id)
+        [Prev(l_range, move_kind), Next(r_range, move_kind)]
+      }
+      range => [range]
     }
-    range => [range]
   })
 }
 

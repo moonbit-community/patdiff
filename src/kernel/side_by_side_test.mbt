@@ -6,9 +6,9 @@
 /// in the source), the result has trailing spaces stripped from every line and
 /// trailing newlines trimmed. Everything else is compared exactly.
 fn sbs_render(
-  mark_newline_changes? : Bool = true,
-  include_colors? : Bool = false,
-  terminal_width? : Int = 125,
+  mark_newline_changes~ : Bool = true,
+  include_colors~ : Bool = false,
+  terminal_width~ : Int32 = 125,
   prev~ : String,
   next~ : String,
 ) -> String {
@@ -105,7 +105,6 @@ fn rstrip_lines(s : String) -> String {
   out.to_string()
 }
 
-
 ///|
 test "side-by-side #1" {
   let prev1 =
@@ -136,7 +135,12 @@ test "side-by-side #1" {
     #|j
     #|k
     #|
-  let actual1 = sbs_render(include_colors=true, terminal_width=125, prev=prev1, next=next1)
+  let actual1 = sbs_render(
+    include_colors=true,
+    terminal_width=125,
+    prev=prev1,
+    next=next1,
+  )
   @test.assert_eq(
     actual1,
     (
@@ -215,7 +219,12 @@ test "side-by-side #2" {
     #|These two files
   let next1 =
     #|are completely different
-  let actual1 = sbs_render(include_colors=true, terminal_width=125, prev=prev1, next=next1)
+  let actual1 = sbs_render(
+    include_colors=true,
+    terminal_width=125,
+    prev=prev1,
+    next=next1,
+  )
   @test.assert_eq(
     actual1,
     (
@@ -250,7 +259,12 @@ test "side-by-side #3" {
     #|Line with a small change
   let next1 =
     #|Line with small change
-  let actual1 = sbs_render(include_colors=true, terminal_width=125, prev=prev1, next=next1)
+  let actual1 = sbs_render(
+    include_colors=true,
+    terminal_width=125,
+    prev=prev1,
+    next=next1,
+  )
   @test.assert_eq(
     actual1,
     (
@@ -277,7 +291,12 @@ test "side-by-side #3" {
     #|Line with a small change but we need it to be long enough that it will wrap
   let next2 =
     #|Line with small change but we need it to be long enough that it will wrap
-  let actual2 = sbs_render(include_colors=true, terminal_width=120, prev=prev2, next=next2)
+  let actual2 = sbs_render(
+    include_colors=true,
+    terminal_width=120,
+    prev=prev2,
+    next=next2,
+  )
   @test.assert_eq(
     actual2,
     (
@@ -306,7 +325,12 @@ test "side-by-side #3" {
     #|Line with a small change
   let next3 =
     #|Line with small change
-  let actual3 = sbs_render(include_colors=true, terminal_width=55, prev=prev3, next=next3)
+  let actual3 = sbs_render(
+    include_colors=true,
+    terminal_width=55,
+    prev=prev3,
+    next=next3,
+  )
   @test.assert_eq(
     actual3,
     (
@@ -333,7 +357,12 @@ test "side-by-side #3" {
     #|Line with a small change
   let next4 =
     #|Line with small change
-  let actual4 = sbs_render(include_colors=true, terminal_width=50, prev=prev4, next=next4)
+  let actual4 = sbs_render(
+    include_colors=true,
+    terminal_width=50,
+    prev=prev4,
+    next=next4,
+  )
   @test.assert_eq(
     actual4,
     (
@@ -371,7 +400,12 @@ test "side-by-side #4" {
     #|The quick brown fox
     #|Veni vidi vici
     #|
-  let actual1 = sbs_render(include_colors=true, terminal_width=125, prev=prev1, next=next1)
+  let actual1 = sbs_render(
+    include_colors=true,
+    terminal_width=125,
+    prev=prev1,
+    next=next1,
+  )
   @test.assert_eq(
     actual1,
     (
@@ -414,7 +448,12 @@ test "test unicode" {
     #|测试一二三
   let next1 =
     #|测试一三
-  let actual1 = sbs_render(include_colors=true, terminal_width=125, prev=prev1, next=next1)
+  let actual1 = sbs_render(
+    include_colors=true,
+    terminal_width=125,
+    prev=prev1,
+    next=next1,
+  )
   @test.assert_eq(
     actual1,
     (
@@ -545,7 +584,12 @@ test "test move" {
     #|eu, posuere in orci. Pellentesque gravida in purus eu ullamcorper. Nunc urna
     #|tortor, hendrerit nec eleifend et, dapibus sed dolor.
     #|
-  let actual1 = sbs_render(include_colors=false, terminal_width=125, prev=prev1, next=next1)
+  let actual1 = sbs_render(
+    include_colors=false,
+    terminal_width=125,
+    prev=prev1,
+    next=next1,
+  )
   @test.assert_eq(
     actual1,
     (
@@ -740,7 +784,12 @@ test "test first word deleted" {
     #|bananas are good
   let next1 =
     #|are good
-  let actual1 = sbs_render(include_colors=true, terminal_width=125, prev=prev1, next=next1)
+  let actual1 = sbs_render(
+    include_colors=true,
+    terminal_width=125,
+    prev=prev1,
+    next=next1,
+  )
   @test.assert_eq(
     actual1,
     (
@@ -767,7 +816,12 @@ test "test first word deleted" {
     #|bananas are good
   let next2 =
     #|are good
-  let actual2 = sbs_render(include_colors=true, terminal_width=16, prev=prev2, next=next2)
+  let actual2 = sbs_render(
+    include_colors=true,
+    terminal_width=16,
+    prev=prev2,
+    next=next2,
+  )
   @test.assert_eq(
     actual2,
     (
@@ -798,7 +852,12 @@ test "test first word added" {
     #|are goooooooooooooooooooooooooooooooooooooooooooood
   let next1 =
     #|bananas are goooooooooooooooooooooooooooooooooooooooooooood
-  let actual1 = sbs_render(include_colors=true, terminal_width=125, prev=prev1, next=next1)
+  let actual1 = sbs_render(
+    include_colors=true,
+    terminal_width=125,
+    prev=prev1,
+    next=next1,
+  )
   @test.assert_eq(
     actual1,
     (
@@ -827,7 +886,12 @@ test "test first word added" {
     #|are goooooooooooooooooooooooooooooooooooooooooooood
   let next2 =
     #|bananas are goooooooooooooooooooooooooooooooooooooooooooood
-  let actual2 = sbs_render(include_colors=true, terminal_width=16, prev=prev2, next=next2)
+  let actual2 = sbs_render(
+    include_colors=true,
+    terminal_width=16,
+    prev=prev2,
+    next=next2,
+  )
   @test.assert_eq(
     actual2,
     (
@@ -860,7 +924,12 @@ test "test word deleted in middle" {
     #|bananas are goooooooooooooooooooooooooooooooooooooooooooood
   let next1 =
     #|bananas goooooooooooooooooooooooooooooooooooooooooooood
-  let actual1 = sbs_render(include_colors=true, terminal_width=125, prev=prev1, next=next1)
+  let actual1 = sbs_render(
+    include_colors=true,
+    terminal_width=125,
+    prev=prev1,
+    next=next1,
+  )
   @test.assert_eq(
     actual1,
     (
@@ -889,7 +958,12 @@ test "test word deleted in middle" {
     #|bananas are goooooooooooooooooooooooooooooooooooooooooooood
   let next2 =
     #|bananas goooooooooooooooooooooooooooooooooooooooooooood
-  let actual2 = sbs_render(include_colors=true, terminal_width=16, prev=prev2, next=next2)
+  let actual2 = sbs_render(
+    include_colors=true,
+    terminal_width=16,
+    prev=prev2,
+    next=next2,
+  )
   @test.assert_eq(
     actual2,
     (
@@ -924,7 +998,12 @@ test "test whole line deleted" {
     #|
   let next1 =
     #|678910
-  let actual1 = sbs_render(include_colors=true, terminal_width=125, prev=prev1, next=next1)
+  let actual1 = sbs_render(
+    include_colors=true,
+    terminal_width=125,
+    prev=prev1,
+    next=next1,
+  )
   @test.assert_eq(
     actual1,
     (
@@ -959,7 +1038,12 @@ test "test whole line deleted" {
     #|
   let next2 =
     #|678910
-  let actual2 = sbs_render(include_colors=true, terminal_width=16, prev=prev2, next=next2)
+  let actual2 = sbs_render(
+    include_colors=true,
+    terminal_width=16,
+    prev=prev2,
+    next=next2,
+  )
   @test.assert_eq(
     actual2,
     (
@@ -998,7 +1082,12 @@ test "test whole line added" {
     #|12345 12345 12345 12345 12345 12345 12345 12345 12345 12345 12345
     #|678910
     #|
-  let actual1 = sbs_render(include_colors=true, terminal_width=125, prev=prev1, next=next1)
+  let actual1 = sbs_render(
+    include_colors=true,
+    terminal_width=125,
+    prev=prev1,
+    next=next1,
+  )
   @test.assert_eq(
     actual1,
     (
@@ -1033,7 +1122,12 @@ test "test whole line added" {
     #|12345 12345 12345 12345 12345 12345 12345 12345 12345 12345 12345
     #|678910
     #|
-  let actual2 = sbs_render(include_colors=true, terminal_width=16, prev=prev2, next=next2)
+  let actual2 = sbs_render(
+    include_colors=true,
+    terminal_width=16,
+    prev=prev2,
+    next=next2,
+  )
   @test.assert_eq(
     actual2,
     (
@@ -1081,7 +1175,12 @@ test "Make sure first word of replace block is formatted correctly" {
     #|new 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
     #|MNO
     #|
-  let actual1 = sbs_render(include_colors=true, terminal_width=140, prev=prev1, next=next1)
+  let actual1 = sbs_render(
+    include_colors=true,
+    terminal_width=140,
+    prev=prev1,
+    next=next1,
+  )
   @test.assert_eq(
     actual1,
     (
@@ -1190,7 +1289,6 @@ test "Test html output" {
   )
 }
 
-
 ///|
 test "test moves with nesting" {
   let prev1 =
@@ -1254,7 +1352,12 @@ test "test moves with nesting" {
     #|
     #|include Server
     #|
-  let actual1 = sbs_render(include_colors=true, terminal_width=140, prev=prev1, next=next1)
+  let actual1 = sbs_render(
+    include_colors=true,
+    terminal_width=140,
+    prev=prev1,
+    next=next1,
+  )
   @test.assert_eq(
     actual1,
     (
@@ -1495,7 +1598,12 @@ test "test side-by-side with move and leading whitespace" {
     #|    i + 1
     #|;;
     #|
-  let actual1 = sbs_render(include_colors=true, terminal_width=125, prev=prev1, next=next1)
+  let actual1 = sbs_render(
+    include_colors=true,
+    terminal_width=125,
+    prev=prev1,
+    next=next1,
+  )
   @test.assert_eq(
     actual1,
     (
@@ -1764,7 +1872,13 @@ test "Same ranges with whitespace-only differences render 'next' content on both
     #|                (* long comment that
     #|                    wraps here *)
     #|    bar
-  let actual2 = sbs_render(mark_newline_changes=true, include_colors=false, terminal_width=125, prev=prev2, next=next2)
+  let actual2 = sbs_render(
+    mark_newline_changes=true,
+    include_colors=false,
+    terminal_width=125,
+    prev=prev2,
+    next=next2,
+  )
   @test.assert_eq(
     actual2,
     (

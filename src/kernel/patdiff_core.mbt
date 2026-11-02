@@ -50,8 +50,18 @@ fn is_ws(s : Bytes) -> Bool {
 ///|
 fn is_delim(c : Byte) -> Bool {
   match c {
-    b'"' | b'{' | b'}' | b'[' | b']' | b'#' | b',' | b'.' | b';' | b'(' | b')' | b'_' =>
-      true
+    b'"'
+    | b'{'
+    | b'}'
+    | b'['
+    | b']'
+    | b'#'
+    | b','
+    | b'.'
+    | b';'
+    | b'('
+    | b')'
+    | b'_' => true
     _ => false
   }
 }
@@ -59,8 +69,22 @@ fn is_delim(c : Byte) -> Bool {
 ///|
 fn is_punct(c : Byte) -> Bool {
   match c {
-    b'=' | b'`' | b'+' | b'-' | b'/' | b'!' | b'@' | b'$' | b'%' | b'^' | b'&' | b'*' | b':' | b'|' | b'<' | b'>' =>
-      true
+    b'='
+    | b'`'
+    | b'+'
+    | b'-'
+    | b'/'
+    | b'!'
+    | b'@'
+    | b'$'
+    | b'%'
+    | b'^'
+    | b'&'
+    | b'*'
+    | b':'
+    | b'|'
+    | b'<'
+    | b'>' => true
     _ => false
   }
 }
@@ -69,7 +93,7 @@ fn is_punct(c : Byte) -> Bool {
 /// The end of the delimiter starting at `i`, if there is one: a single `delim`,
 /// a run of `punct`, a run of whitespace or a whole ANSI SGR sequence. We don't
 /// want to split up ANSI color sequences, so they get through intact.
-fn match_word_delimiter(s : Bytes, i : Int) -> Int? {
+fn match_word_delimiter(s : Bytes, i : Int32) -> Int32? {
   let n = s.length()
   let c = s[i]
   let run = (f : (Byte) -> Bool) => {
@@ -155,7 +179,10 @@ fn whitespace_ignorant_split(s : Bytes) -> Array[Bytes] {
 
 ///|
 /// Width available for rendering side-by-side output.
-pub fn output_width(width_override? : Int, platform? : Platform = Platform::without_unix()) -> Int {
+pub fn output_width(
+  width_override? : Int32,
+  platform~ : Platform = Platform::without_unix(),
+) -> Int32 {
   let console = (platform.console_width)()
   match (width_override, console, platform.am_running_test) {
     // Since we often render diffs indented by one (whenever we have multiple
@@ -175,17 +202,23 @@ fn format_range(
   output : Output,
   range : @pd.Range[Bytes],
 ) -> @pd.Range[Bytes] {
-  let formatted = (ar : Array[Bytes], rule : Rule, refined : Bool) => [
-    for x in ar => apply_rule(x, rule~, output~, refined~)
-  ]
+  let formatted = (ar : Array[Bytes], rule : Rule, refined : Bool) => {
+    [
+      for x in ar => apply_rule(x, rule~, output~, refined~)
+    ]
+  }
   match range {
     Same(ar) =>
-      Same([
-        for pair in ar => {
-          let app = x => apply_rule(x, rule=rules.line_same, output~, refined=false)
-          (app(pair.0), app(pair.1))
-        }
-      ])
+      Same(
+        [
+          for pair in ar => {
+            let app = x => {
+              apply_rule(x, rule=rules.line_same, output~, refined=false)
+            }
+            (app(pair.0), app(pair.1))
+          }
+        ],
+      )
     Next(ar, move_kind) => {
       let rule = match move_kind {
         Some(Move(_)) => rules.moved_to_next
@@ -231,8 +264,12 @@ fn ranges_to_strings(
 ) -> Array[@pd.Hunk[Bytes]] {
   [
     for hunk in hunks => {
-      ..hunk,
-      ranges: [ for range in hunk.ranges => format_range(rules, output, range) ],
+      {
+        ..hunk,
+        ranges: [
+          for range in hunk.ranges => format_range(rules, output, range)
+        ],
+      }
     }
   ]
 }
@@ -241,7 +278,7 @@ fn ranges_to_strings(
 /// Renders each line for a single-column diff, preserving the structure of the
 /// hunk list (which usually comes from `diff` or `refine`).
 pub fn build_unified(
-  annotation_gutter? : AnnotationGutter = AnnotationGutter::empty(),
+  annotation_gutter~ : AnnotationGutter = AnnotationGutter::empty(),
   rules~ : Rules,
   output~ : Output,
   hunks : ArrayView[@pd.Hunk[Bytes]],
@@ -261,13 +298,13 @@ pub fn build_unified(
 ///|
 /// Print a hunk list (usually from `diff` or `refine`) as a single-column diff.
 pub fn print_unified(
-  print_global_header? : Bool = true,
+  print_global_header~ : Bool = true,
   file_names~ : (FileName, FileName),
   rules~ : Rules,
   output~ : Output,
   print~ : (Bytes) -> Unit,
   location_style~ : LocationStyle,
-  platform? : Platform = Platform::without_unix(),
+  platform~ : Platform = Platform::without_unix(),
   hunks : ArrayView[@pd.Hunk[Bytes]],
 ) -> Unit {
   print_output(
@@ -284,7 +321,7 @@ pub fn print_unified(
 
 ///|
 /// A right-aligned number followed by a space.
-fn line_num_text(line_num : Int?, len~ : Int) -> Bytes {
+fn line_num_text(line_num : Int32?, len~ : Int32) -> Bytes {
   let n = match line_num {
     None => b""
     Some(n) => @bstr.of_int(n)
@@ -293,7 +330,7 @@ fn line_num_text(line_num : Int?, len~ : Int) -> Bytes {
 }
 
 ///|
-fn[A] max_line_number(hunks : ArrayView[@pd.Hunk[A]]) -> Int {
+fn[A] max_line_number(hunks : ArrayView[@pd.Hunk[A]]) -> Int32 {
   let mut m = 0
   for hunk in hunks {
     m = @cmp.maximum(m, hunk.prev_start + hunk.prev_size - 1)
@@ -304,7 +341,7 @@ fn[A] max_line_number(hunks : ArrayView[@pd.Hunk[A]]) -> Int {
 
 ///|
 fn get_gutters(
-  wrapped? : Bool = false,
+  wrapped~ : Bool = false,
   rules~ : Rules,
   output~ : Output,
   line : LineInfo,
@@ -340,36 +377,42 @@ fn get_diff_style(
   let apply = (rule, str) => apply_rule(str, rule~, output~, refined=false)
   match line {
     Same(_, _) | Prev(_, None) | Next(_, None) =>
-      (tag, str) => match tag {
-        Prev => apply(rules.word_prev, str)
-        Same => apply(rules.word_same_unified, str)
-        Next => apply(rules.word_next, str)
+      (tag, str) => {
+        match tag {
+          Prev => apply(rules.word_prev, str)
+          Same => apply(rules.word_same_unified, str)
+          Next => apply(rules.word_next, str)
+        }
       }
     Prev(_, Some(_)) =>
-      (tag, str) => match tag {
-        Prev => apply(rules.word_prev, str)
-        Same => apply(rules.moved_from_prev.strip_prefix(), str)
-        // Shouldn't be called, but returning the word seems safe.
-        Next => str
+      (tag, str) => {
+        match tag {
+          Prev => apply(rules.word_prev, str)
+          Same => apply(rules.moved_from_prev.strip_prefix(), str)
+          // Shouldn't be called, but returning the word seems safe.
+          Next => str
+        }
       }
     Next(_, Some(_)) =>
-      (tag, str) => match tag {
-        // Shouldn't be called, but returning the word seems safe.
-        Prev => str
-        Same => apply(rules.moved_to_next.strip_prefix(), str)
-        Next => apply(rules.word_next, str)
+      (tag, str) => {
+        match tag {
+          // Shouldn't be called, but returning the word seems safe.
+          Prev => str
+          Same => apply(rules.moved_to_next.strip_prefix(), str)
+          Next => apply(rules.word_next, str)
+        }
       }
   }
 }
 
 ///|
 fn render_side_by_side_line(
-  line_num_width? : Int = 0,
-  annotation_gutter? : AnnotationGutter = AnnotationGutter::empty(),
+  line_num_width~ : Int32 = 0,
+  annotation_gutter~ : AnnotationGutter = AnnotationGutter::empty(),
   rules~ : Rules,
   output~ : Output,
   wrap_or_truncate~ : WrapOrTruncate,
-  pane_cols~ : Int,
+  pane_cols~ : Int32,
   line : LineInfo,
 ) -> Array[(Bytes, Bytes)] {
   let annotation_width = annotation_gutter.width
@@ -404,7 +447,10 @@ fn render_side_by_side_line(
       match (prev_line_num, next_line_num) {
         (Some(prev), Some(next)) if prev_segs.any_non_same() ||
           next_segs.any_non_same() =>
-          (render_annotation(Prev(line=prev)), render_annotation(Next(line=next)))
+          (
+            render_annotation(Prev(line=prev)),
+            render_annotation(Next(line=next)),
+          )
         (Some(prev), Some(next)) => {
           let s = render_annotation(Same(prev~, next~))
           (s, s)
@@ -447,12 +493,12 @@ fn render_side_by_side_line(
 /// structure of the hunk list (which usually comes from `refine_structured`).
 pub fn build_side_by_side(
   annotation_gutter? : AnnotationGutter,
-  width_override? : Int,
-  include_line_numbers? : Bool = true,
+  width_override? : Int32,
+  include_line_numbers~ : Bool = true,
   rules~ : Rules,
   wrap_or_truncate~ : WrapOrTruncate,
   output~ : Output,
-  platform? : Platform = Platform::without_unix(),
+  platform~ : Platform = Platform::without_unix(),
   hunks : ArrayView[StructuredHunk],
 ) -> Array[Array[(Bytes, Bytes)]] {
   // Need one character for the center divider.
@@ -494,13 +540,13 @@ fn make_divider(output : Output) -> Bytes {
 
 ///|
 fn render_filenames(
-  annotation_gutter? : AnnotationGutter = AnnotationGutter::empty(),
+  annotation_gutter~ : AnnotationGutter = AnnotationGutter::empty(),
   prev_file~ : FileName,
   next_file~ : FileName,
-  pane_cols~ : Int,
+  pane_cols~ : Int32,
   output~ : Output,
   rules~ : Rules,
-  line_num_width~ : Int,
+  line_num_width~ : Int32,
 ) -> Array[Bytes] {
   let annotation_width = annotation_gutter.width
   let cols_available = pane_cols - line_num_width - annotation_width
@@ -515,11 +561,12 @@ fn render_filenames(
   match output {
     Ansi | Ascii =>
       [
-        for pair in @ansi_text.to_double_column(
-          width=cols_available,
-          left=prev,
-          right=next,
-        ) => prefix + pair.0 + middle_divider + prefix + pair.1
+        for
+          pair in @ansi_text.to_double_column(
+            width=cols_available,
+            left=prev,
+            right=next,
+          ) => prefix + pair.0 + middle_divider + prefix + pair.1
       ]
     Html => {
       let buff = @bstr.spaces(pane_cols - prev_file.display_name().length())
@@ -533,13 +580,13 @@ fn render_filenames(
 /// Print a hunk list, usually from `refine_structured`, as a double-column diff.
 pub fn print_side_by_side(
   annotation_gutter? : AnnotationGutter,
-  width_override? : Int,
+  width_override? : Int32,
   file_names? : (FileName, FileName),
   rules~ : Rules,
   wrap_or_truncate~ : WrapOrTruncate,
   output~ : Output,
   print~ : (Bytes) -> Unit,
-  platform? : Platform = Platform::without_unix(),
+  platform~ : Platform = Platform::without_unix(),
   hunks : ArrayView[StructuredHunk],
 ) -> Unit {
   let lines = build_side_by_side(
@@ -580,7 +627,7 @@ pub fn print_side_by_side(
 
 ///|
 /// `(indentation width, index of first non-indentation byte)`.
-fn indentation(line : Bytes) -> (Int, Int) {
+fn indentation(line : Bytes) -> (Int32, Int32) {
   let mut n = 0
   for i, c in line {
     match c {
@@ -602,7 +649,7 @@ fn indentation(line : Bytes) -> (Int, Int) {
 /// But it isn't priority, we just add things. We try to counteract failures for
 /// the case where the line below the boundary starts with e.g. `;;` by removing
 /// the "decreasing indentation bonus" in that case.
-fn score_line(side : @pd.Side, line1 : Bytes, line2 : Bytes) -> Int {
+fn score_line(side : @pd.Side, line1 : Bytes, line2 : Bytes) -> Int32 {
   let (i1, start_of_1) = indentation(line1)
   let (i2, start_of_2) = indentation(line2)
   let some_lines_are_blank = line1.is_empty() || line2.is_empty()
@@ -628,8 +675,17 @@ fn score_line(side : @pd.Side, line1 : Bytes, line2 : Bytes) -> Int {
   // `above` picks the line before the boundary and `below` the one after.
   // `only` restricts the bonus to one boundary of the diff region. The bonus
   // applies if `str` is at the start of the line, after indentation.
-  let bonus = fn(n : Int, above : Bool, only : @pd.Side?, str : Bytes) -> Int {
-    let (line, i) = if above { (line1, start_of_1) } else { (line2, start_of_2) }
+  let bonus = fn(
+    n : Int32,
+    above : Bool,
+    only : @pd.Side?,
+    str : Bytes,
+  ) -> Int32 {
+    let (line, i) = if above {
+      (line1, start_of_1)
+    } else {
+      (line2, start_of_2)
+    }
     let applies = match only {
       None => true
       Some(only) => only == side
@@ -674,21 +730,21 @@ fn score_line(side : @pd.Side, line1 : Bytes, line2 : Bytes) -> Int {
 
 ///|
 priv struct RangeInfo {
-  range_index : Int
-  size_of_range : Int
-  replace_id : Int?
+  range_index : Int32
+  size_of_range : Int32
+  replace_id : Int32?
 }
 
 ///|
 /// Tracks the state of `Replace` ranges when we explode them into a `Prev` and a
 /// `Next`.
 priv struct RangeWithReplacesInfo {
-  hunk_index : Int
+  hunk_index : Int32
   former_replace : Bool
 }
 
 ///|
-fn sum_of_lengths(lines : ArrayView[Bytes]) -> Int {
+fn sum_of_lengths(lines : ArrayView[Bytes]) -> Int32 {
   lines.fold(init=0, (acc, line) => acc + line.length())
 }
 
@@ -704,7 +760,7 @@ fn max_similarity(a : RangeInfo, b : RangeInfo) -> Double {
 fn last_at_most(
   sorted : ArrayView[(RangeInfo, Array[Bytes])],
   key : RangeInfo,
-) -> Int? {
+) -> Int32? {
   let mut lo = 0
   let mut hi = sorted.length()
   while lo < hi {
@@ -731,28 +787,31 @@ const MINIMUM_LINES = 3
 ///|
 priv struct MoveInfo {
   move_index : @pd.MoveId
-  mut lines_to_trim_at_beg : Int?
-  mut lines_to_trim_at_end : Int?
+  mut lines_to_trim_at_beg : Int32?
+  mut lines_to_trim_at_end : Int32?
 }
 
 ///|
 /// Finds `Prev` and `Next` ranges (including halves of `Replace` ranges) that
 /// are similar enough to be a moved block of lines.
 pub fn find_moves(
-  line_big_enough~ : Int,
+  line_big_enough~ : Int32,
   keep_ws~ : Bool,
   hunks : ArrayView[@pd.Hunk[Bytes]],
 ) -> Array[@pd.Hunk[Bytes]] {
   // Rewrite `Replace` ranges as a `Prev` and `Next` so we can consider them for
   // moves, and extract all ranges from the hunks so they're easier to work with.
   let all_ranges : Array[(RangeWithReplacesInfo, @pd.Range[Bytes])] = []
-  let replace_ids : Array[Int?] = []
+  let replace_ids : Array[Int32?] = []
   let mut next_replace_id = 0
   for hunk_index, hunk in hunks {
     for range in hunk.ranges {
       match range {
         Replace(prev, next, None) => {
-          let info = RangeWithReplacesInfo::{ hunk_index, former_replace: true }
+          let info = RangeWithReplacesInfo::{
+            hunk_index,
+            former_replace: true,
+          }
           all_ranges.push((info, Prev(prev, None)))
           all_ranges.push((info, Next(next, None)))
           replace_ids.push(Some(next_replace_id))
@@ -760,29 +819,42 @@ pub fn find_moves(
           next_replace_id += 1
         }
         _ => {
-          all_ranges.push(({ hunk_index, former_replace: false }, range))
+          all_ranges.push(({ hunk_index, former_replace: false, }, range))
           replace_ids.push(None)
         }
       }
     }
   }
   let prev_ranges : Array[(RangeInfo, Array[Bytes])] = []
-  let next_heap : PairingHeap[(RangeInfo, Array[Bytes])] = PairingHeap::new(
-    (a, b) => a.0.size_of_range.compare(b.0.size_of_range),
-  )
+  let next_heap : PairingHeap[(RangeInfo, Array[Bytes])] = PairingHeap::new((
+    a,
+    b,
+  ) => a.0.size_of_range.compare(b.0.size_of_range))
   for range_index, item in all_ranges {
     let replace_id = replace_ids[range_index]
     match item.1 {
       Prev(contents, None) if contents.length() >= MINIMUM_LINES =>
-        prev_ranges.push((
-          { range_index, size_of_range: sum_of_lengths(contents), replace_id },
-          contents,
-        ))
+        prev_ranges.push(
+          (
+            {
+              range_index,
+              size_of_range: sum_of_lengths(contents),
+              replace_id,
+            },
+            contents,
+          ),
+        )
       Next(contents, None) if contents.length() >= MINIMUM_LINES =>
-        next_heap.add((
-          { range_index, size_of_range: sum_of_lengths(contents), replace_id },
-          contents,
-        ))
+        next_heap.add(
+          (
+            {
+              range_index,
+              size_of_range: sum_of_lengths(contents),
+              replace_id,
+            },
+            contents,
+          ),
+        )
       _ => ()
     }
   }
@@ -790,8 +862,8 @@ pub fn find_moves(
   if prev_ranges.length() * next_heap.length > 40000 {
     return hunks.to_owned()
   }
-  let prevs_used : Map[Int, MoveInfo] = Map([])
-  let nexts_to_replace : Map[Int, Array[@pd.Range[Bytes]]] = Map([])
+  let prevs_used : Map[Int32, MoveInfo] = Map([])
+  let nexts_to_replace : Map[Int32, Array[@pd.Range[Bytes]]] = Map([])
   // Find ranges that are similar enough to be moves.
   let next_ranges = []
   while next_heap.pop() is Some(item) {
@@ -812,7 +884,8 @@ pub fn find_moves(
       } else {
         None
       }
-      let right_range = if right_index >= 0 && right_index < next_ranges.length() {
+      let right_range = if right_index >= 0 &&
+        right_index < next_ranges.length() {
         Some(next_ranges[right_index])
       } else {
         None
@@ -852,7 +925,8 @@ pub fn find_moves(
         break
       }
       // Don't use the two parts of the same replace for moves.
-      let same_replace = match (next_location.replace_id, prev_location.replace_id) {
+      let same_replace = match
+        (next_location.replace_id, prev_location.replace_id) {
         (Some(next_id), Some(prev_id)) => next_id == prev_id
         _ => false
       }
@@ -862,24 +936,37 @@ pub fn find_moves(
       // `match_ratio` just does naive string comparisons per line, so strip
       // leading and trailing whitespace.
       let match_ratio = @pd.match_ratio(
-        [ for line in prev_contents => @bstr.strip(line) ],
-        [ for line in next_contents => @bstr.strip(line) ],
+        [
+          for line in prev_contents => @bstr.strip(line)
+        ],
+        [
+          for line in next_contents => @bstr.strip(line)
+        ],
       )
       match best_match_so_far {
         None =>
           if match_ratio >= MINIMUM_MATCH_PERC {
-            best_match_so_far = Some((match_ratio, next_location, next_contents))
+            best_match_so_far = Some(
+              (match_ratio, next_location, next_contents),
+            )
           }
         Some((best_match_ratio, _, _)) =>
           if match_ratio > best_match_ratio {
-            best_match_so_far = Some((match_ratio, next_location, next_contents))
+            best_match_so_far = Some(
+              (match_ratio, next_location, next_contents),
+            )
           }
       }
     }
     guard best_match_so_far is Some((_, next_location, next_contents)) else {
       continue
     }
-    let hunk = diff_singleton(line_big_enough~, keep_ws~, prev_contents, next_contents)
+    let hunk = diff_singleton(
+      line_big_enough~,
+      keep_ws~,
+      prev_contents,
+      next_contents,
+    )
     let move_index = move_id
     let move_info = MoveInfo::{
       move_index,
@@ -944,23 +1031,27 @@ pub fn find_moves(
         let trim_beg = move_info.lines_to_trim_at_beg.unwrap_or(0)
         let trim_end = move_info.lines_to_trim_at_end.unwrap_or(0)
         let len = contents.length()
-        let range_data = { ..range_data, former_replace: false }
+        let range_data = { ..range_data, former_replace: false, }
         if trim_beg != 0 {
           ranges.push((range_data, Prev(contents[0:trim_beg].to_owned(), None)))
         }
-        ranges.push((
-          range_data,
-          Prev(
-            contents[trim_beg:len - trim_end].to_owned(),
-            Some(Move(move_info.move_index)),
+        ranges.push(
+          (
+            range_data,
+            Prev(
+              contents[trim_beg:len - trim_end].to_owned(),
+              Some(Move(move_info.move_index)),
+            ),
           ),
-        ))
+        )
         if trim_end != 0 {
-          ranges.push((range_data, Prev(contents[len - trim_end:].to_owned(), None)))
+          ranges.push(
+            (range_data, Prev(contents[len - trim_end:].to_owned(), None)),
+          )
         }
       }
       (None, Some(ranges_to_replace)) => {
-        let range_data = { ..range_data, former_replace: false }
+        let range_data = { ..range_data, former_replace: false, }
         for range in ranges_to_replace {
           ranges.push((range_data, range))
         }
@@ -974,13 +1065,12 @@ pub fn find_moves(
     let item = ranges[i]
     match (item, ranges.get(i + 1)) {
       (
-        ({ former_replace: true, hunk_index }, Prev(prev, None)),
+        ({ former_replace: true, hunk_index, }, Prev(prev, None)),
         Some(({ former_replace: true, .. }, Next(next, None))),
       ) => {
-        final_ranges.push((
-          { former_replace: false, hunk_index },
-          Replace(prev, next, None),
-        ))
+        final_ranges.push(
+          ({ former_replace: false, hunk_index, }, Replace(prev, next, None)),
+        )
         i += 2
       }
       _ => {
@@ -999,7 +1089,7 @@ pub fn find_moves(
         hunk_ranges.push(final_ranges[position].1)
         position += 1
       }
-      { ..hunk, ranges: hunk_ranges }
+      { ..hunk, ranges: hunk_ranges, }
     }
   ]
 }
@@ -1007,7 +1097,7 @@ pub fn find_moves(
 ///|
 /// `find_moves`, for `diff`, whose label of the same name shadows it.
 fn find_moves_impl(
-  line_big_enough~ : Int,
+  line_big_enough~ : Int32,
   keep_ws~ : Bool,
   hunks : ArrayView[@pd.Hunk[Bytes]],
 ) -> Array[@pd.Hunk[Bytes]] {
@@ -1026,7 +1116,7 @@ fn line_transform(keep_ws : Bool) -> (Bytes) -> Bytes {
 ///|
 /// Diff two sets of lines into a single hunk.
 fn diff_singleton(
-  line_big_enough~ : Int,
+  line_big_enough~ : Int32,
   keep_ws~ : Bool,
   prev : Array[Bytes],
   next : Array[Bytes],
@@ -1046,8 +1136,8 @@ fn diff_singleton(
 ///|
 /// A list of hunks describing the comparison between `prev` and `next`.
 pub fn diff(
-  context~ : Int,
-  line_big_enough~ : Int,
+  context~ : Int32,
+  line_big_enough~ : Int32,
   keep_ws~ : Bool,
   find_moves~ : Bool,
   prev~ : ArrayView[Bytes],

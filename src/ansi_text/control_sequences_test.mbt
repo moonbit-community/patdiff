@@ -5,9 +5,10 @@
 fn control_of_csi(input : String) -> Control {
   match @ansi_text.parse(b(input)) {
     [Control(c)] => c
-    other => {
-      abort("expected a single Control, got \{str(@ansi_text.to_bytes_hum(other))}")
-    }
+    other =>
+      abort(
+        "expected a single Control, got \{str(@ansi_text.to_bytes_hum(other))}",
+      )
   }
 }
 
@@ -30,8 +31,14 @@ test "of_csi_params |> to_string round-trips" {
 
 ///|
 test "visualization with to_string_hum" {
-  @test.assert_eq(control_of_csi("\u{1b}[E").to_string_hum(), "(CursorNextLine)")
-  @test.assert_eq(control_of_csi("\u{1b}[K").to_string_hum(), "(EraseLine:ToEnd)")
+  @test.assert_eq(
+    control_of_csi("\u{1b}[E").to_string_hum(),
+    "(CursorNextLine)",
+  )
+  @test.assert_eq(
+    control_of_csi("\u{1b}[K").to_string_hum(),
+    "(EraseLine:ToEnd)",
+  )
   @test.assert_eq(
     control_of_csi("\u{1b}[12C").to_string_hum(),
     "(CursorForward:12)",

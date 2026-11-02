@@ -17,7 +17,10 @@ test "parse and print" {
 
 ///|
 test "comments" {
-  inspect(mach("; line\n(a #| block #| nested |# |# b #;(ignored) c)"), content="(a b c)")
+  inspect(
+    mach("; line\n(a #| block #| nested |# |# b #;(ignored) c)"),
+    content="(a b c)",
+  )
 }
 
 ///|

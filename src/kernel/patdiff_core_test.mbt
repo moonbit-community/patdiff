@@ -6,7 +6,9 @@ fn pc_trim_blank_lines(s : String) -> String {
   for line in s.split("\n") {
     lines.push(@bstr.to_string(@bstr.rstrip(b(line.to_owned()))))
   }
-  let is_blank = (line : String) => line.iter().all(c => c == ' ' || c == '\t' || c == '\r')
+  let is_blank = (line : String) => {
+    line.iter().all(c => c == ' ' || c == '\t' || c == '\r')
+  }
   let mut lo = 0
   let mut hi = lines.length()
   while lo < hi && is_blank(lines[lo]) {
@@ -183,7 +185,7 @@ test "float tolerance works as expected" {
     printed.write_string(
       pc_print(
         @kernel.patdiff(
-          float_tolerance?=float_tolerance,
+          float_tolerance?,
           produce_unified_lines=false,
           output=Ascii,
           prev=pc_input("old", old_text),
@@ -249,7 +251,9 @@ test "test single empty line" {
 let pc_py_prev : @kernel.DiffInput = pc_input("old.py", "print(5)")
 
 ///|
-let pc_py_next : @kernel.DiffInput = pc_input("new.py", "if True:\n    print(5)")
+let pc_py_next : @kernel.DiffInput = pc_input(
+  "new.py", "if True:\n    print(5)",
+)
 
 ///|
 fn pc_no_ansi_escapes(s : Bytes) -> Bool {
@@ -368,7 +372,7 @@ fn pc_test_moves(prev : String, next : String) -> String {
     pre=@kernel.Affix::new(b(">!")),
     [],
   )
-  let rules = { ..rules, removed_in_move, added_in_move, line_unified_in_move }
+  let rules = { ..rules, removed_in_move, added_in_move, line_unified_in_move, }
   pc_print(
     @kernel.patdiff(
       rules~,
@@ -1292,11 +1296,11 @@ test "test moves when nesting changes" {
 
 ///|
 priv struct PcRng {
-  mut state : Int
+  mut state : Int32
 }
 
 ///|
-fn PcRng::int_incl(self : PcRng, lo : Int, hi : Int) -> Int {
+fn PcRng::int_incl(self : PcRng, lo : Int32, hi : Int32) -> Int32 {
   self.state = (self.state * 1103515245 + 12345) & 0x7fffffff
   lo + (self.state >> 8) % (hi - lo + 1)
 }
@@ -1308,20 +1312,20 @@ fn PcRng::alpha_string(self : PcRng) -> Bytes {
   for _ in 0..<len {
     let n = self.int_incl(0, 51)
     let c = if n < 26 { 'a'.to_int() + n } else { 'A'.to_int() + n - 26 }
-    buf.write_char(Int::unsafe_to_char(c))
+    buf.write_char(Int32::unsafe_to_char(c))
   }
   b(buf.to_string())
 }
 
 ///|
 priv enum PcAction {
-  Move(start~ : Int, length~ : Int, to_~ : Int)
-  Delete(start~ : Int, length~ : Int)
-  Insert(start~ : Int, contents~ : Bytes)
+  Move(start~ : Int32, length~ : Int32, to_~ : Int32)
+  Delete(start~ : Int32, length~ : Int32)
+  Insert(start~ : Int32, contents~ : Bytes)
 }
 
 ///|
-fn PcAction::gen(rng : PcRng, str_length~ : Int) -> PcAction {
+fn PcAction::gen(rng : PcRng, str_length~ : Int32) -> PcAction {
   match rng.int_incl(0, 2) {
     0 => {
       let start = rng.int_incl(0, str_length)
@@ -1343,12 +1347,12 @@ fn PcAction::gen(rng : PcRng, str_length~ : Int) -> PcAction {
 }
 
 ///|
-fn pc_prefix(s : Bytes, n : Int) -> Bytes {
+fn pc_prefix(s : Bytes, n : Int32) -> Bytes {
   @bstr.sub(s, 0, @cmp.minimum(n, s.length()))
 }
 
 ///|
-fn pc_drop_prefix(s : Bytes, n : Int) -> Bytes {
+fn pc_drop_prefix(s : Bytes, n : Int32) -> Bytes {
   @bstr.sub(s, @cmp.minimum(n, s.length()), s.length())
 }
 
@@ -1403,7 +1407,9 @@ fn pc_recovery_error(prev : Array[Bytes], next : Array[Bytes]) -> String? {
     }
   }
   // Avoid comparing duplicate newlines at the end of the strings
-  let strip = (lines : Array[Bytes]) => @bstr.strip(@bstr.concat(lines, sep=b"\n"))
+  let strip = (lines : Array[Bytes]) => {
+    @bstr.strip(@bstr.concat(lines, sep=b"\n"))
+  }
   if strip(recover_prev) != strip(prev) {
     return Some(
       "could not recover prev:\n\{shown(strip(recover_prev))}\n(expected:\n\{shown(strip(prev))})",
@@ -1454,7 +1460,7 @@ fn pc_shrink(
 
 ///|
 test "ensure we can always recover the original content if there are moves" {
-  let rng = PcRng::{ state: 20240607 }
+  let rng = PcRng::{ state: 20240607, }
   for trial in 0..<1000 {
     let prev = Array::makei(50, _ => rng.alpha_string())
     let prev_string = @bstr.concat(prev, sep=b"\n")
@@ -1482,7 +1488,7 @@ test "ensure we can always recover the original content if there are moves" {
 test "ensure that our refinement heuristic does not drop any changes" {
   // To trigger the refinement heuristic we need all lines to be different and
   // there is at at least one word shared between the two.
-  let rng = PcRng::{ state: 4242 }
+  let rng = PcRng::{ state: 4242, }
   for trial in 0..<50 {
     let lines_prev = rng.int_incl(200, 500)
     let lines_next = rng.int_incl(200, 500)
@@ -1533,9 +1539,9 @@ test "ensure that our refinement heuristic does not drop any changes" {
       word_big_enough=@kernel.DEFAULT_WORD_BIG_ENOUGH,
       hunks,
     )
-    let text = (line : Array[(@kernel.Tag, Bytes)]) => @bstr.concat(
-      line.map(p => p.1),
-    )
+    let text = (line : Array[(@kernel.Tag, Bytes)]) => {
+      @bstr.concat(line.map(p => p.1))
+    }
     let recover_prev = []
     let recover_next = []
     for hunk in hunks {

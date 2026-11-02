@@ -6,8 +6,8 @@ pub(all) struct Affix {
 } derive(Debug, Eq)
 
 ///|
-pub fn Affix::new(text : Bytes, styles? : Array[@ansi_text.Attr] = []) -> Affix {
-  { text, styles }
+pub fn Affix::new(text : Bytes, styles~ : Array[@ansi_text.Attr] = []) -> Affix {
+  { text, styles, }
 }
 
 ///|
@@ -17,7 +17,7 @@ pub fn Affix::blank() -> Affix {
 
 ///|
 fn Affix::strip_styles(self : Affix) -> Affix {
-  { ..self, styles: [] }
+  { ..self, styles: [], }
 }
 
 ///|
@@ -31,11 +31,11 @@ pub(all) struct Rule {
 
 ///|
 pub fn Rule::new(
-  pre? : Affix = Affix::blank(),
-  suf? : Affix = Affix::blank(),
+  pre~ : Affix = Affix::blank(),
+  suf~ : Affix = Affix::blank(),
   styles : Array[@ansi_text.Attr],
 ) -> Rule {
-  { pre, suf, styles }
+  { pre, suf, styles, }
 }
 
 ///|
@@ -45,26 +45,22 @@ pub fn Rule::blank() -> Rule {
 
 ///|
 pub fn Rule::unstyled_prefix(text : Bytes) -> Rule {
-  { ..Rule::blank(), pre: Affix::new(text) }
+  { ..Rule::blank(), pre: Affix::new(text), }
 }
 
 ///|
 pub fn Rule::strip_styles(self : Rule) -> Rule {
-  {
-    pre: self.pre.strip_styles(),
-    suf: self.suf.strip_styles(),
-    styles: [],
-  }
+  { pre: self.pre.strip_styles(), suf: self.suf.strip_styles(), styles: [], }
 }
 
 ///|
 pub fn Rule::strip_prefix(self : Rule) -> Rule {
-  { ..self, pre: Affix::blank() }
+  { ..self, pre: Affix::blank(), }
 }
 
 ///|
 pub fn Rule::use_prefix_text_from(self : Rule, this_prefix~ : Rule) -> Rule {
-  { ..self, pre: { ..self.pre, text: this_prefix.pre.text } }
+  { ..self, pre: { ..self.pre, text: this_prefix.pre.text, }, }
 }
 
 ///|
@@ -180,28 +176,28 @@ pub fn Rules::strip_styles(self : Rules) -> Rules {
 ///|
 /// Which line(s) a row of output came from, for `AnnotationGutter`.
 pub(all) enum GutterSide {
-  Prev(line~ : Int)
-  Next(line~ : Int)
-  Same(prev~ : Int, next~ : Int)
-  Unified(prev~ : Int, next~ : Int)
+  Prev(line~ : Int32)
+  Next(line~ : Int32)
+  Same(prev~ : Int32, next~ : Int32)
+  Unified(prev~ : Int32, next~ : Int32)
 } derive(Debug, Eq)
 
 ///|
 /// A column rendered before the +/- diff gutter of each visible line.
 pub(all) struct AnnotationGutter {
-  width : Int
+  width : Int32
   render : (GutterSide) -> Bytes
 }
 
 ///|
 pub fn AnnotationGutter::empty() -> AnnotationGutter {
-  { width: 0, render: _ => b"" }
+  { width: 0, render: _ => b"", }
 }
 
 ///|
 /// Truncates and pads what `render` returns to `width` columns.
 pub fn AnnotationGutter::new(
-  width~ : Int,
+  width~ : Int32,
   render~ : (GutterSide) -> Bytes,
 ) -> AnnotationGutter {
   {
@@ -249,10 +245,8 @@ pub fn LocationStyle::of_string(s : String) -> LocationStyle? {
 }
 
 ///|
-fn omake_style_error_message_start(file~ : Bytes, line~ : Int) -> Bytes {
-  b"File \"" +
-  file +
-  @bstr.of_string("\", line \{line}, characters 0-1:")
+fn omake_style_error_message_start(file~ : Bytes, line~ : Int32) -> Bytes {
+  b"File \"" + file + @bstr.of_string("\", line \{line}, characters 0-1:")
 }
 
 ///|

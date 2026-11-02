@@ -35,9 +35,9 @@ pub(all) enum Attr {
   Fg(Color)
   Bg(Color)
   UlColor(Color)
-  Font(Int)
-  Ideogram(Int)
-  Other(Array[Int])
+  Font(Int32)
+  Ideogram(Int32)
+  Other(Array[Int32])
 } derive(Debug, Eq)
 
 ///|
@@ -108,14 +108,18 @@ pub fn overrides(new_attr~ : Attr, old_attr~ : Attr) -> Bool {
 }
 
 ///|
-fn of_color_code(code : ArrayView[Int]) -> Color? {
+fn of_color_code(code : ArrayView[Int32]) -> Color? {
   match code {
     [5, c] if c >= 0 && c <= 7 => Some(sgr8(c))
     [5, c] if c >= 8 && c <= 15 => Some(sgr8(c - 8, bright=true))
     [5, c] if c >= 16 && c <= 231 => Some(Rgb6(Rgb6::of_code(c)))
     [5, c] if c >= 232 && c <= 255 => Some(Gray24(Gray24::of_code(c)))
-    [2, r, g, b] if r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255 =>
-      Some(Rgb256(Rgb256::of_rgb(r, g, b)))
+    [2, r, g, b] if r >= 0 &&
+      r <= 255 &&
+      g >= 0 &&
+      g <= 255 &&
+      b >= 0 &&
+      b <= 255 => Some(Rgb256(Rgb256::of_rgb(r, g, b)))
     _ => None
   }
 }
@@ -124,7 +128,7 @@ fn of_color_code(code : ArrayView[Int]) -> Color? {
 /// An `Attr` from a list of SGR parameter codes: known codes such as `1` for
 /// bold or `38;5;196` for 256-color red foreground are parsed into specific
 /// variants, and unrecognized codes are returned as `Other`.
-pub fn Attr::of_codes(codes : ArrayView[Int]) -> Attr {
+pub fn Attr::of_codes(codes : ArrayView[Int32]) -> Attr {
   let other = () => Attr::Other(codes.to_owned())
   match codes {
     [0] => Reset
@@ -185,7 +189,7 @@ pub fn Attr::of_codes(codes : ArrayView[Int]) -> Attr {
 }
 
 ///|
-fn ints_to_string(codes : ArrayView[Int], sep? : String = ";") -> String {
+fn ints_to_string(codes : ArrayView[Int32], sep~ : String = ";") -> String {
   let parts = [ for c in codes => c.to_string() ]
   parts.join(sep)
 }

@@ -8,8 +8,28 @@ priv struct StringWithFloats {
 ///|
 fn is_float_delim(c : Byte) -> Bool {
   match c {
-    b' ' | b';' | b':' | b',' | b'\\' | b'|' | b'#' | b'&' | b'(' | b')' | b'{' | b'}' | b'[' | b']' | b'<' | b'>' | b'~' | b'=' | b'+' | b'-' | b'*' | b'/' =>
-      true
+    b' '
+    | b';'
+    | b':'
+    | b','
+    | b'\\'
+    | b'|'
+    | b'#'
+    | b'&'
+    | b'('
+    | b')'
+    | b'{'
+    | b'}'
+    | b'['
+    | b']'
+    | b'<'
+    | b'>'
+    | b'~'
+    | b'='
+    | b'+'
+    | b'-'
+    | b'*'
+    | b'/' => true
     _ => false
   }
 }
@@ -34,9 +54,9 @@ fn is_word_char(c : Byte) -> Bool {
 
 ///|
 /// `-?[0-9]+(\.[0-9]*)?([eE][+-]?[0-9]+)?` at `i`, giving the end of the match.
-fn scan_float(s : Bytes, i : Int) -> Int? {
+fn scan_float(s : Bytes, i : Int32) -> Int32? {
   let n = s.length()
-  let digits_from = (start : Int) => {
+  let digits_from = (start : Int32) => {
     let mut j = start
     while j < n && is_digit(s[j]) {
       j += 1
@@ -68,7 +88,7 @@ fn scan_float(s : Bytes, i : Int) -> Int? {
 ///|
 /// What may follow a float, giving the end of the match: the end of the input,
 /// `%`, a delimiter, or a unit (`bp`, `s`, `m`, `ms`) ending a word.
-fn scan_float_suffix(s : Bytes, i : Int) -> Int? {
+fn scan_float_suffix(s : Bytes, i : Int32) -> Int32? {
   let n = s.length()
   if i == n {
     return Some(i)
@@ -94,11 +114,11 @@ fn scan_float_suffix(s : Bytes, i : Int) -> Int? {
 /// the leftmost-longest regexp of the OCaml version, of two matches from the
 /// same place the longer wins, and of equally long matches the one with no
 /// prefix wins, so that a leading `-` is a sign rather than a delimiter.
-fn find_float(s : Bytes) -> (Int, Int)? {
+fn find_float(s : Bytes) -> (Int32, Int32)? {
   for i in 0..<s.length() {
-    let mut best : (Int, Int)? = None
+    let mut best : (Int32, Int32)? = None
     let mut best_end = -1
-    let attempt = (float_start : Int) => {
+    let attempt = (float_start : Int32) => {
       guard scan_float(s, float_start) is Some(float_end) else { return }
       guard scan_float_suffix(s, float_end) is Some(suffix_end) else { return }
       if suffix_end > best_end {
@@ -124,7 +144,12 @@ fn parse_float(s : Bytes) -> Double {
   let text = @bstr.to_string(s)
   // It can only fail by overflowing, given what `scan_float` accepts.
   @string.parse_double(text) catch {
-    _ => if text.has_prefix("-") { @double.neg_infinity } else { @double.infinity }
+    _ =>
+      if text.has_prefix("-") {
+        @double.neg_infinity
+      } else {
+        @double.infinity
+      }
   }
 }
 
@@ -137,7 +162,7 @@ fn StringWithFloats::new(line : Bytes) -> StringWithFloats {
     line = @bstr.sub(line, 0, float_start) +
       @bstr.sub(line, float_end, line.length())
   }
-  { floats, without_floats: line }
+  { floats, without_floats: line, }
 }
 
 ///|
@@ -167,19 +192,20 @@ fn[A] needleman_wunsch(
   xs : ArrayView[A],
   ys : ArrayView[A],
   equal : (A, A) -> Bool,
-) -> Array[Array[Int]] {
+) -> Array[Array[Int32]] {
   let rows = xs.length()
   let cols = ys.length()
   let a = Array::makei(rows + 1, _ => Array::make(cols + 1, 0))
-  for i in 0..=rows {
+  for i in 0..<=rows {
     a[i][0] = i
   }
-  for j in 0..=cols {
+  for j in 0..<=cols {
     a[0][j] = j
   }
-  for i in 1..=rows {
-    for j in 1..=cols {
-      let replace = a[i - 1][j - 1] + (if equal(xs[i - 1], ys[j - 1]) { 0 } else { 1 })
+  for i in 1..<=rows {
+    for j in 1..<=cols {
+      let replace = a[i - 1][j - 1] +
+        (if equal(xs[i - 1], ys[j - 1]) { 0 } else { 1 })
       a[i][j] = @cmp.minimum(
         @cmp.minimum(a[i - 1][j] + 1, a[i][j - 1] + 1),
         replace,
@@ -191,8 +217,8 @@ fn[A] needleman_wunsch(
 
 ///|
 priv enum PartialRangeIndexes {
-  Matching(Array[(Int, Int)])
-  Nonmatching(Array[Int], Array[Int])
+  Matching(Array[(Int32, Int32)])
+  Nonmatching(Array[Int32], Array[Int32])
 }
 
 ///|
@@ -201,11 +227,11 @@ priv enum PartialRangeIndexes {
 fn[A] recover_ranges(
   xs : ArrayView[A],
   ys : ArrayView[A],
-  a : Array[Array[Int]],
+  a : Array[Array[Int32]],
 ) -> Array[@pd.Range[A]] {
   // Index of smallest element in the triple, with ties going to the element with
   // higher index.
-  let smallest = (a : Int, b : Int, c : Int) => {
+  let smallest = (a : Int32, b : Int32, c : Int32) => {
     if a < b {
       if a < c {
         0
@@ -224,7 +250,8 @@ fn[A] recover_ranges(
   let mut i = xs.length()
   let mut j = ys.length()
   while i > 0 && j > 0 {
-    let (i2, j2, matched) = match smallest(a[i - 1][j], a[i - 1][j - 1], a[i][j - 1]) {
+    let (i2, j2, matched) = match
+      smallest(a[i - 1][j], a[i - 1][j - 1], a[i][j - 1]) {
       0 => (i - 1, j, false)
       1 => (i - 1, j - 1, a[i][j] == a[i - 1][j - 1])
       _ => (i, j - 1, false)
@@ -274,13 +301,18 @@ fn[A] recover_ranges(
   [
     for item in acc.rev_iter() => {
       match item {
-        Matching(ijs) => Same([ for ij in ijs.rev_iter() => (xs[ij.0], ys[ij.1]) ])
+        Matching(ijs) =>
+          Same([ for ij in ijs.rev_iter() => (xs[ij.0], ys[ij.1]) ])
         Nonmatching(is_, []) => Prev([ for i in is_.rev_iter() => xs[i] ], None)
         Nonmatching([], js) => Next([ for j in js.rev_iter() => ys[j] ], None)
         Nonmatching(is_, js) =>
           Replace(
-            [ for i in is_.rev_iter() => xs[i] ],
-            [ for j in js.rev_iter() => ys[j] ],
+            [
+              for i in is_.rev_iter() => xs[i]
+            ],
+            [
+              for j in js.rev_iter() => ys[j]
+            ],
             None,
           )
       }
@@ -293,19 +325,25 @@ fn do_tolerance(
   tolerance : Double,
   hunks : ArrayView[@pd.Hunk[Bytes]],
 ) -> Array[@pd.Hunk[Bytes]] {
-  @pd.concat_map_ranges(hunks, range => match range {
-    Same(_) | Prev(_, _) | Next(_, _) => [range]
-    Unified(_, _) => abort("Unexpected Unified range.")
-    Replace(prev, next, _) =>
-      recover_ranges(
-        prev,
-        next,
-        needleman_wunsch(
-          [ for line in prev => StringWithFloats::new(line) ],
-          [ for line in next => StringWithFloats::new(line) ],
-          (a, b) => close_enough(tolerance, a, b),
-        ),
-      )
+  @pd.concat_map_ranges(hunks, range => {
+    match range {
+      Same(_) | Prev(_, _) | Next(_, _) => [range]
+      Unified(_, _) => abort("Unexpected Unified range.")
+      Replace(prev, next, _) =>
+        recover_ranges(
+          prev,
+          next,
+          needleman_wunsch(
+            [
+              for line in prev => StringWithFloats::new(line)
+            ],
+            [
+              for line in next => StringWithFloats::new(line)
+            ],
+            (a, b) => close_enough(tolerance, a, b),
+          ),
+        )
+    }
   })
 }
 
@@ -335,7 +373,8 @@ fn merged_with_position(
         lines.push_iter(cadr.iter())
         current = Same(lines)
       }
-      (Unified(_, _), _) | (_, Unified(_, _)) => abort("Unexpected unified range.")
+      (Unified(_, _), _) | (_, Unified(_, _)) =>
+        abort("Unexpected unified range.")
       _ => {
         out.push((current, position))
         current = range
@@ -355,7 +394,7 @@ fn merged_with_position(
 /// Limits the `Same` ranges of `hunk` to `context` lines, splitting it into
 /// several hunks where lines of context are dropped.
 fn enforce_context_limit(
-  context~ : Int,
+  context~ : Int32,
   hunk : @pd.Hunk[Bytes],
 ) -> Array[@pd.Hunk[Bytes]] {
   let out = []
@@ -367,13 +406,19 @@ fn enforce_context_limit(
     let prev_size = ranges.fold(init=0, (acc, r) => acc + r.prev_size())
     let next_size = ranges.fold(init=0, (acc, r) => acc + r.next_size())
     if !ranges.is_empty() {
-      out.push(@pd.Hunk::{ prev_start, prev_size, next_start, next_size, ranges })
+      out.push(@pd.Hunk::{
+        prev_start,
+        prev_size,
+        next_start,
+        next_size,
+        ranges,
+      })
     }
     prev_start += prev_size
     next_start += next_size
     ranges = []
   }
-  let drop = (n : Int) => {
+  let drop = (n : Int32) => {
     finish()
     prev_start += n
     next_start += n
@@ -423,7 +468,7 @@ fn enforce_context_limit(
 pub fn float_tolerance_apply(
   hunks : ArrayView[@pd.Hunk[Bytes]],
   tolerance : Double,
-  context~ : Int,
+  context~ : Int32,
 ) -> Array[@pd.Hunk[Bytes]] {
   let out = []
   for hunk in do_tolerance(tolerance, hunks) {

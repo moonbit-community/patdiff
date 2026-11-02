@@ -13,8 +13,8 @@ priv enum RowKind {
 ///|
 /// Tracks the current line numbers of a hunk while emitting its rows.
 priv struct LineCursor {
-  mut prev_line : Int
-  mut next_line : Int
+  mut prev_line : Int32
+  mut next_line : Int32
 }
 
 ///|
@@ -49,8 +49,10 @@ pub fn[A] iter_sides(
       prev_line: hunk.prev_start,
       next_line: hunk.next_start,
     }
-    let emit = (kind, n) => for _ in 0..<n {
-      f_line(cursor.side(kind))
+    let emit = (kind, n) => {
+      for _ in 0..<n {
+        f_line(cursor.side(kind))
+      }
     }
     for range in hunk.ranges {
       match range {
@@ -81,8 +83,10 @@ pub fn iter_with_line_info(
       prev_line: hunk.prev_start,
       next_line: hunk.next_start,
     }
-    let emit = (kind, lines : ArrayView[Bytes]) => for line in lines {
-      f_line(cursor.side(kind), line)
+    let emit = (kind, lines : ArrayView[Bytes]) => {
+      for line in lines {
+        f_line(cursor.side(kind), line)
+      }
     }
     for range in hunk.ranges {
       match range {

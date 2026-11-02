@@ -12,7 +12,7 @@ pub(all) suberror SexpError {
 }
 
 ///|
-pub impl Show for SexpError with output(self, logger) {
+pub impl Show for SexpError with fn output(self, logger) {
   let SexpError(msg) = self
   logger.write_string(msg)
 }
@@ -25,7 +25,7 @@ pub fn Sexp::atom(s : StringView) -> Sexp {
 ///|
 priv struct Reader {
   input : Bytes
-  mut pos : Int
+  mut pos : Int32
 }
 
 ///|
@@ -44,7 +44,9 @@ fn Reader::skip_block_comment(self : Reader) -> Unit raise SexpError {
   self.pos += 2
   let mut depth = 1
   while depth > 0 {
-    guard self.peek() is Some(c) else { raise self.fail("unterminated block comment") }
+    guard self.peek() is Some(c) else {
+      raise self.fail("unterminated block comment")
+    }
     let next = self.input.get(self.pos + 1)
     if c == b'|' && next is Some(b'#') {
       depth -= 1
@@ -80,7 +82,7 @@ fn Reader::skip_blanks(self : Reader) -> Unit raise SexpError {
 }
 
 ///|
-fn hex_value(c : Byte) -> Int? {
+fn hex_value(c : Byte) -> Int32? {
   match c {
     b if b >= b'0' && b <= b'9' => Some(b.to_int() - 48)
     b if b >= b'a' && b <= b'f' => Some(b.to_int() - 87)
@@ -99,7 +101,9 @@ fn Reader::read_string(self : Reader) -> Bytes raise SexpError {
     match c {
       b'"' => return buf.contents()
       b'\\' => {
-        guard self.peek() is Some(e) else { raise self.fail("unterminated string") }
+        guard self.peek() is Some(e) else {
+          raise self.fail("unterminated string")
+        }
         self.pos += 1
         match e {
           b'n' => buf.write_byte(b'\n')
@@ -189,7 +193,7 @@ fn Reader::read(self : Reader) -> Sexp raise SexpError {
 ///|
 /// Parses exactly one s-expression.
 pub fn Sexp::parse(input : Bytes) -> Sexp raise SexpError {
-  let reader = Reader::{ input, pos: 0 }
+  let reader = Reader::{ input, pos: 0, }
   let sexp = reader.read()
   reader.skip_blanks()
   if reader.peek() is Some(_) {
@@ -284,7 +288,7 @@ pub fn Sexp::to_bytes_mach(self : Sexp) -> Bytes {
 /// An indented form, for files that people read.
 pub fn Sexp::to_bytes_hum(self : Sexp) -> Bytes {
   let buf = Buffer()
-  fn write(sexp : Sexp, indent : Int) -> Unit {
+  fn write(sexp : Sexp, indent : Int32) -> Unit {
     match sexp {
       Atom(s) => buf.write_bytes(atom_to_bytes(s))
       List(items) => {

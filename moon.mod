@@ -14,4 +14,4 @@ description = "File diff using the patience diff algorithm: a MoonBit port of Ja
 
 source = "src"
 
-options("preferred-target": "native")
+preferred_target = "native"

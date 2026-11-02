@@ -6,31 +6,37 @@
 pub(all) struct Line {
   /// The line number in the original file. Only `None` for an empty line
   /// produced when padding to match alignment.
-  line_number : Int?
+  line_number : Int32?
   contents : Array[(Tag, @ansi_text.AnsiText)]
 } derive(Debug, Eq)
 
 ///|
 pub fn Line::to_bytes(self : Line) -> Bytes {
-  @bstr.concat([ for segment in self.contents => @ansi_text.to_unstyled(segment.1) ])
+  @bstr.concat(
+    [
+      for segment in self.contents => @ansi_text.to_unstyled(segment.1)
+    ],
+  )
 }
 
 ///|
 /// `style` gets applied to each phrase, then phrases are concatenated.
 pub fn Line::styled_string(
   self : Line,
-  output? : Output = Ansi,
+  output~ : Output = Ansi,
   style~ : (Tag, Bytes) -> Bytes,
 ) -> Bytes {
-  @bstr.concat([
-    for segment in self.contents => {
-      let (tag, text) = segment
-      match output {
-        Ansi => style(tag, @ansi_text.to_bytes(text))
-        Ascii | Html => style(tag, @ansi_text.to_unstyled(text))
+  @bstr.concat(
+    [
+      for segment in self.contents => {
+        let (tag, text) = segment
+        match output {
+          Ansi => style(tag, @ansi_text.to_bytes(text))
+          Ascii | Html => style(tag, @ansi_text.to_unstyled(text))
+        }
       }
-    }
-  ])
+    ],
+  )
 }
 
 ///|
@@ -40,17 +46,17 @@ pub fn Line::any_non_same(self : Line) -> Bool {
 
 ///|
 fn Line::empty() -> Line {
-  { line_number: None, contents: [] }
+  { line_number: None, contents: [], }
 }
 
 ///|
 /// The width of the line if it were printed in the terminal.
-pub fn Line::width(self : Line) -> Int {
+pub fn Line::width(self : Line) -> Int32 {
   self.contents.fold(init=0, (acc, segment) => acc + @ansi_text.width(segment.1))
 }
 
 ///|
-pub fn Line::wrap(self : Line, width~ : Int) -> Array[Line] {
+pub fn Line::wrap(self : Line, width~ : Int32) -> Array[Line] {
   let max_width = width
   if max_width <= 1 {
     abort("width is too narrow")
@@ -65,7 +71,10 @@ pub fn Line::wrap(self : Line, width~ : Int) -> Array[Line] {
       curr_len += word_len
       curr_line.push(segment)
     } else {
-      let (word_start, word_rest) = @ansi_text.split(text, pos=max_width - curr_len)
+      let (word_start, word_rest) = @ansi_text.split(
+        text,
+        pos=max_width - curr_len,
+      )
       curr_line.push((tag, word_start))
       lines.push(curr_line)
       let mut rest = word_rest
@@ -83,14 +92,20 @@ pub fn Line::wrap(self : Line, width~ : Int) -> Array[Line] {
   }
   [
     for i, line in lines => {
-      line_number: if i == 0 { self.line_number } else { None },
-      contents: line,
+      {
+        line_number: if i == 0 {
+          self.line_number
+        } else {
+          None
+        },
+        contents: line,
+      }
     }
   ]
 }
 
 ///|
-pub fn Line::truncate(self : Line, width~ : Int) -> Line {
+pub fn Line::truncate(self : Line, width~ : Int32) -> Line {
   let mut len = 0
   let contents = []
   for segment in self.contents {
@@ -103,7 +118,7 @@ pub fn Line::truncate(self : Line, width~ : Int) -> Line {
     len += text_width
     contents.push(segment)
   }
-  { ..self, contents }
+  { ..self, contents, }
 }
 
 ///|
@@ -117,7 +132,7 @@ pub(all) enum LineInfo {
 ///|
 /// In the case of a `Same` line, it may be necessary to pad one side with empty
 /// lines.
-pub fn LineInfo::wrap(self : LineInfo, width~ : Int) -> Array[LineInfo] {
+pub fn LineInfo::wrap(self : LineInfo, width~ : Int32) -> Array[LineInfo] {
   match self {
     Prev(line, mv) => [ for ln in line.wrap(width~) => Prev(ln, mv) ]
     Next(line, mv) => [ for ln in line.wrap(width~) => Next(ln, mv) ]
@@ -130,13 +145,15 @@ pub fn LineInfo::wrap(self : LineInfo, width~ : Int) -> Array[LineInfo] {
       while next.length() < prev.length() {
         next.push(Line::empty())
       }
-      [ for i, line in prev => Same(line, next[i]) ]
+      [
+        for i, line in prev => Same(line, next[i])
+      ]
     }
   }
 }
 
 ///|
-pub fn LineInfo::truncate(self : LineInfo, width~ : Int) -> LineInfo {
+pub fn LineInfo::truncate(self : LineInfo, width~ : Int32) -> LineInfo {
   match self {
     Same(prev, next) => Same(prev.truncate(width~), next.truncate(width~))
     Prev(prev, move_id) => Prev(prev.truncate(width~), move_id)
@@ -155,7 +172,7 @@ pub fn LineInfo::lines(self : LineInfo) -> (Line, Line) {
 }
 
 ///|
-pub fn LineInfo::numbers(self : LineInfo) -> (Int?, Int?) {
+pub fn LineInfo::numbers(self : LineInfo) -> (Int32?, Int32?) {
   match self {
     Same(prev, next) => (prev.line_number, next.line_number)
     Prev(prev, _) => (prev.line_number, None)
@@ -164,7 +181,7 @@ pub fn LineInfo::numbers(self : LineInfo) -> (Int?, Int?) {
 }
 
 ///|
-fn num_same(contents : ArrayView[(Tag, @ansi_text.AnsiText)]) -> Int {
+fn num_same(contents : ArrayView[(Tag, @ansi_text.AnsiText)]) -> Int32 {
   contents.fold(init=0, (count, segment) => {
     if segment.0 is Same && !@ansi_text.is_empty(segment.1) {
       count + 1
@@ -176,8 +193,8 @@ fn num_same(contents : ArrayView[(Tag, @ansi_text.AnsiText)]) -> Int {
 
 ///|
 fn align_replace_lines(
-  get_prev_line_number~ : () -> Int?,
-  get_next_line_number~ : () -> Int?,
+  get_prev_line_number~ : () -> Int32?,
+  get_next_line_number~ : () -> Int32?,
   queue : Array[LineInfo],
   prev_lines : ArrayView[Array[(Tag, @ansi_text.AnsiText)]],
   next_lines : ArrayView[Array[(Tag, @ansi_text.AnsiText)]],
@@ -186,8 +203,14 @@ fn align_replace_lines(
   let mut next_index = 0
   let mut num_same_words_prev = 0
   let mut num_same_words_next = 0
-  let prev_line = contents => Line::{ line_number: get_prev_line_number(), contents }
-  let next_line = contents => Line::{ line_number: get_next_line_number(), contents }
+  let prev_line = contents => Line::{
+    line_number: get_prev_line_number(),
+    contents,
+  }
+  let next_line = contents => Line::{
+    line_number: get_next_line_number(),
+    contents,
+  }
   while prev_index < prev_lines.length() || next_index < next_lines.length() {
     if next_index >= next_lines.length() {
       queue.push(Prev(prev_line(prev_lines[prev_index]), None))
@@ -198,8 +221,10 @@ fn align_replace_lines(
     } else {
       let prev_contents = prev_lines[prev_index]
       let next_contents = next_lines[next_index]
-      let new_num_same_words_prev = num_same_words_prev + num_same(prev_contents)
-      let new_num_same_words_next = num_same_words_next + num_same(next_contents)
+      let new_num_same_words_prev = num_same_words_prev +
+        num_same(prev_contents)
+      let new_num_same_words_next = num_same_words_next +
+        num_same(next_contents)
       if new_num_same_words_prev <= num_same_words_next {
         queue.push(Prev(prev_line(prev_contents), None))
         prev_index += 1
@@ -239,23 +264,30 @@ fn retag_same(
 }
 
 ///|
-fn to_contents(line : ArrayView[(Tag, Bytes)]) -> Array[(Tag, @ansi_text.AnsiText)] {
-  [ for segment in line => (segment.0, @ansi_text.parse(segment.1)) ]
+fn to_contents(
+  line : ArrayView[(Tag, Bytes)],
+) -> Array[(Tag, @ansi_text.AnsiText)] {
+  [
+    for segment in line => (segment.0, @ansi_text.parse(segment.1))
+  ]
 }
 
 ///|
 /// Take structured hunks and produce hunks of `LineInfo`. The elements of the
 /// outer array represent the original hunks passed in and the inner elements are
 /// the lines within the hunk.
-pub fn hunks_to_lines(hunks : ArrayView[StructuredHunk]) -> Array[Array[LineInfo]] {
+pub fn hunks_to_lines(
+  hunks : ArrayView[StructuredHunk],
+) -> Array[Array[LineInfo]] {
   let result : Array[Array[LineInfo]] = []
   let mut prev_line_number = 1
   let mut next_line_number = 1
-  let start_of_move_in_prev : Map[Int, (Int, Int)] = Map([])
+  let start_of_move_in_prev : Map[Int32, (Int32, Int32)] = Map([])
   // Since moves may have been refined we need to remember the next parts of
   // moves so we can rewrite the prev part with the changes that we found during
   // refinement.
-  let nexts_by_move_id : Map[Int, Array[@pd.Range[Array[(Tag, Bytes)]]]] = Map([])
+  let nexts_by_move_id : Map[Int32, Array[@pd.Range[Array[(Tag, Bytes)]]]] = Map([],
+  )
   let record_next_move = (move_id, range) => {
     match nexts_by_move_id.get(move_id) {
       None => nexts_by_move_id[move_id] = [range]
@@ -281,8 +313,14 @@ pub fn hunks_to_lines(hunks : ArrayView[StructuredHunk]) -> Array[Array[LineInfo
       match range {
         Same(lines) =>
           for pair in lines {
-            let left = Line::{ line_number: bump_prev(), contents: to_contents(pair.0) }
-            let right = Line::{ line_number: bump_next(), contents: to_contents(pair.1) }
+            let left = Line::{
+              line_number: bump_prev(),
+              contents: to_contents(pair.0),
+            }
+            let right = Line::{
+              line_number: bump_next(),
+              contents: to_contents(pair.1),
+            }
             queue.push(Same(left, right))
           }
         Prev(lines, move_kind) => {
@@ -310,7 +348,7 @@ pub fn hunks_to_lines(hunks : ArrayView[StructuredHunk]) -> Array[Array[LineInfo
                   )
                 }
                 queue.push(
-                  Prev({ line_number: bump_prev(), contents }, Some(move_id)),
+                  Prev({ line_number: bump_prev(), contents, }, Some(move_id)),
                 )
               }
               Some(WithinMove(_)) => ()
@@ -333,7 +371,7 @@ pub fn hunks_to_lines(hunks : ArrayView[StructuredHunk]) -> Array[Array[LineInfo
                   None,
                 )
               Some(Move(move_id)) =>
-                Next({ line_number: bump_next(), contents }, Some(move_id))
+                Next({ line_number: bump_next(), contents, }, Some(move_id))
               Some(WithinMove(move_id)) =>
                 Next(
                   {
@@ -351,21 +389,26 @@ pub fn hunks_to_lines(hunks : ArrayView[StructuredHunk]) -> Array[Array[LineInfo
             get_prev_line_number=bump_prev,
             get_next_line_number=bump_next,
             queue,
-            [ for line in prev_lines => to_contents(line) ],
-            [ for line in next_lines => to_contents(line) ],
+            [
+              for line in prev_lines => to_contents(line)
+            ],
+            [
+              for line in next_lines => to_contents(line)
+            ],
           )
         Replace(_, next_lines, Some(move_id)) => {
           record_next_move(move_id, range)
           for line in next_lines {
             queue.push(
               Next(
-                { line_number: bump_next(), contents: to_contents(line) },
+                { line_number: bump_next(), contents: to_contents(line), },
                 Some(move_id),
               ),
             )
           }
         }
-        Unified(_, _) => abort("Cannot turn unified ranges into side by side view")
+        Unified(_, _) =>
+          abort("Cannot turn unified ranges into side by side view")
       }
     }
   }

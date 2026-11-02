@@ -4,14 +4,14 @@
 /// computed from its sanitized form.
 pub(all) struct Text {
   str : Bytes
-  char_widths : Array[(Char, Int)]
-  width : Int
+  char_widths : Array[(Char, Int32)]
+  width : Int32
 } derive(Debug, Eq)
 
 ///|
 /// Decode the UTF-8 scalar at `i`, returning it with its encoded length.
 /// Ill-formed input yields U+FFFD and consumes the maximal invalid subpart.
-fn decode_utf8(s : Bytes, i : Int) -> (Char, Int) {
+fn decode_utf8(s : Bytes, i : Int32) -> (Char, Int32) {
   let replacement = '\u{FFFD}'
   let n = s.length()
   let b0 = s[i].to_int()
@@ -48,7 +48,7 @@ fn decode_utf8(s : Bytes, i : Int) -> (Char, Int) {
 }
 
 ///|
-fn utf8_byte_length(c : Char) -> Int {
+fn utf8_byte_length(c : Char) -> Int32 {
   let code = c.to_int()
   if code < 0x80 {
     1
@@ -73,7 +73,7 @@ pub fn Text::of_bytes(str : Bytes) -> Text {
     width += w
     i += len
   }
-  { str, char_widths, width }
+  { str, char_widths, width, }
 }
 
 ///|
@@ -83,7 +83,7 @@ pub fn Text::is_empty(self : Text) -> Bool {
 
 ///|
 /// Split so that the prefix is as wide as possible while not exceeding `pos`.
-pub fn Text::split(self : Text, pos~ : Int) -> (Text, Text) {
+pub fn Text::split(self : Text, pos~ : Int32) -> (Text, Text) {
   let mut prefix_width = 0
   let mut n = 0
   let mut prefix_bytes = 0
@@ -114,14 +114,10 @@ pub fn Text::split(self : Text, pos~ : Int) -> (Text, Text) {
 }
 
 ///|
-pub impl Add for Text with add(self, other) {
+pub impl Add for Text with fn add(self, other) {
   let char_widths = self.char_widths.copy()
   char_widths.push_iter(other.char_widths.iter())
-  {
-    str: self.str + other.str,
-    char_widths,
-    width: self.width + other.width,
-  }
+  { str: self.str + other.str, char_widths, width: self.width + other.width, }
 }
 
 ///|

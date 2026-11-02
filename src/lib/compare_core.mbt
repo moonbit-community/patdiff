@@ -5,7 +5,7 @@ pub(all) suberror Failure {
 }
 
 ///|
-pub impl Show for Failure with output(self, logger) {
+pub impl Show for Failure with fn output(self, logger) {
   let Failure(msg) = self
   logger.write_string(msg)
 }
@@ -52,13 +52,15 @@ pub fn compare_files(
   let next = @sys.read_file(next_file.real_name())
   @kernel.ComparisonResult::new(
     config,
-    prev={ name: prev_file.display_name(), text: prev },
-    next={ name: next_file.display_name(), text: next },
+    prev={ name: prev_file.display_name(), text: prev, },
+    next={ name: next_file.display_name(), text: next, },
     compare_assuming_text=(config, prev, next) => {
       let (prev_lines, prev_newline) = @kernel.lines_of_contents(prev.text)
       let (next_lines, next_newline) = @kernel.lines_of_contents(next.text)
       @kernel.warn_if_no_trailing_newline(
-        warn=file => @sys.print_stderr(b"No newline at the end of " + file + b"\n"),
+        warn=file => {
+          @sys.print_stderr(b"No newline at the end of " + file + b"\n")
+        },
         prev=(prev_newline, prev.name),
         next=(next_newline, next.name),
         warn_if_no_trailing_newline_in_both=config.warn_if_no_trailing_newline_in_both,
@@ -78,8 +80,11 @@ pub fn print_result(
   let (prev_file, next_file) = file_names
   if hunks.has_no_diff() {
     if config.double_check &&
-      @sys.read_file(prev_file.real_name()) != @sys.read_file(next_file.real_name()) {
-      print_line(b"There are no differences except those filtered by your settings")
+      @sys.read_file(prev_file.real_name()) !=
+      @sys.read_file(next_file.real_name()) {
+      print_line(
+        b"There are no differences except those filtered by your settings",
+      )
     }
   } else if !config.quiet {
     match hunks {
@@ -154,7 +159,10 @@ pub fn diff_files(
 }
 
 ///|
-fn has_kind(file : @kernel.FileName, kind : @sys.FileKind) -> Bool raise @sys.SysError {
+fn has_kind(
+  file : @kernel.FileName,
+  kind : @sys.FileKind,
+) -> Bool raise @sys.SysError {
   @sys.stat(file.real_name()) is Some(stat) && stat.kind == kind
 }
 
@@ -170,12 +178,10 @@ fn set_of_dir(
   for name in @sys.read_dir(dir.real_name()) {
     let path = @kernel.filename_concat(dir.real_name(), name)
     if @sys.stat(path) is Some(stat) &&
-      (
-        match file_filter {
-          None => true
-          Some(file_filter) => file_filter(path, stat)
-        }
-      ) {
+      (match file_filter {
+        None => true
+        Some(file_filter) => file_filter(path, stat)
+      }) {
       names.push(name)
     }
   }
@@ -205,7 +211,11 @@ fn diff_dirs_internal(
       let file = dir.append(file)
       if has_kind(file, Regular) {
         let null = @kernel.FileName::dev_null()
-        let (prev_file, next_file) = if is_prev { (file, null) } else { (null, file) }
+        let (prev_file, next_file) = if is_prev {
+          (file, null)
+        } else {
+          (null, file)
+        }
         let _ = diff_files_internal(config, prev_file~, next_file~)
       }
     }
@@ -338,10 +348,7 @@ pub fn get_config(filename? : Bytes) -> @kernel.Configuration {
       match @env.get_env_var("HOME") {
         None => None
         Some(home) => {
-          let file = @kernel.filename_concat(
-            @bstr.of_string(home),
-            b".patdiff",
-          )
+          let file = @kernel.filename_concat(@bstr.of_string(home), b".patdiff")
           try @sys.stat(file) catch {
             _ => None
           } noraise {

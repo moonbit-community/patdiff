@@ -28,7 +28,7 @@ pub const WARN_IF_NO_TRAILING_NEWLINE_IN_BOTH_DEFAULT = true
 pub const DEFAULT_DOUBLE_COLUMN_WIDTH = 121
 
 ///|
-let default_double_column_width : Int = DEFAULT_DOUBLE_COLUMN_WIDTH
+let default_double_column_width : Int32 = DEFAULT_DOUBLE_COLUMN_WIDTH
 
 ///|
 pub(all) enum WrapOrTruncate {
@@ -51,9 +51,9 @@ pub(all) struct Configuration {
   split_long_lines : Bool
   interleave : Bool
   assume_text : Bool
-  context : Int
-  line_big_enough : Int
-  word_big_enough : Int
+  context : Int32
+  line_big_enough : Int32
+  word_big_enough : Int32
   shallow : Bool
   quiet : Bool
   double_check : Bool
@@ -63,7 +63,7 @@ pub(all) struct Configuration {
   location_style : LocationStyle
   warn_if_no_trailing_newline_in_both : Bool
   side_by_side : WrapOrTruncate?
-  width_override : Int?
+  width_override : Int32?
 } derive(Debug, Eq)
 
 ///|
@@ -96,9 +96,9 @@ pub fn Configuration::override_with(
   split_long_lines? : Bool,
   interleave? : Bool,
   assume_text? : Bool,
-  context? : Int,
-  line_big_enough? : Int,
-  word_big_enough? : Int,
+  context? : Int32,
+  line_big_enough? : Int32,
+  word_big_enough? : Int32,
   shallow? : Bool,
   quiet? : Bool,
   double_check? : Bool,
@@ -108,7 +108,7 @@ pub fn Configuration::override_with(
   location_style? : LocationStyle,
   warn_if_no_trailing_newline_in_both? : Bool,
   side_by_side? : WrapOrTruncate?,
-  width_override? : Int?,
+  width_override? : Int32?,
 ) -> Configuration {
   let output = output.unwrap_or(self.output)
   {
@@ -158,7 +158,10 @@ pub fn Configuration::default() -> Configuration {
     output: Ansi,
     rules: {
       line_same: Rule::new([], pre=affix(b" |", black_on(Bright(Black)))),
-      line_prev: Rule::new([Fg(Standard(Red))], pre=affix(b"-|", black_on(Standard(Red)))),
+      line_prev: Rule::new(
+        [Fg(Standard(Red))],
+        pre=affix(b"-|", black_on(Standard(Red))),
+      ),
       line_next: Rule::new(
         [Fg(Standard(Green))],
         pre=affix(b"+|", black_on(Standard(Green))),
@@ -178,7 +181,10 @@ pub fn Configuration::default() -> Configuration {
         ),
       ),
       header_prev: Rule::new([Bold], pre=affix(b"------ ", [Fg(Standard(Red))])),
-      header_next: Rule::new([Bold], pre=affix(b"++++++ ", [Fg(Standard(Green))])),
+      header_next: Rule::new(
+        [Bold],
+        pre=affix(b"++++++ ", [Fg(Standard(Green))]),
+      ),
       moved_from_prev: Rule::new(
         [Fg(Standard(Magenta))],
         pre=affix(b"<|", black_on(Standard(Magenta))),
@@ -195,7 +201,10 @@ pub fn Configuration::default() -> Configuration {
         [Fg(Standard(Green))],
         pre=affix(b">|", black_on(Standard(Green))),
       ),
-      line_unified_in_move: Rule::new([], pre=affix(b">|", black_on(Standard(Yellow)))),
+      line_unified_in_move: Rule::new(
+        [],
+        pre=affix(b">|", black_on(Standard(Yellow))),
+      ),
     },
     float_tolerance: None,
     produce_unified_lines: true,

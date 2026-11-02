@@ -4,7 +4,7 @@ fn esc_string(body : String) -> Bytes {
 }
 
 ///|
-fn opt_int(n : Int?) -> String {
+fn opt_int(n : Int32?) -> String {
   match n {
     Some(n) => n.to_string()
     None => ""
@@ -12,7 +12,7 @@ fn opt_int(n : Int?) -> String {
 }
 
 ///|
-fn params_to_string(params : ArrayView[Int?]) -> String {
+fn params_to_string(params : ArrayView[Int32?]) -> String {
   let parts = [ for p in params => opt_int(p) ]
   parts.join(";")
 }
@@ -35,23 +35,23 @@ pub(all) enum ClearScreen {
 ///|
 /// The Control Sequence Introducer commands recognized by this library.
 pub(all) enum Control {
-  CursorUp(Int?)
-  CursorDown(Int?)
-  CursorForward(Int?)
-  CursorBackward(Int?)
-  CursorNextLine(Int?)
-  CursorPrevLine(Int?)
-  CursorToCol(Int?)
-  CursorToPos(Int?, Int?)
+  CursorUp(Int32?)
+  CursorDown(Int32?)
+  CursorForward(Int32?)
+  CursorBackward(Int32?)
+  CursorNextLine(Int32?)
+  CursorPrevLine(Int32?)
+  CursorToCol(Int32?)
+  CursorToPos(Int32?, Int32?)
   EraseDisplay(ClearScreen?)
   EraseLine(ClearLine?)
-  ScrollUp(Int?)
-  ScrollDown(Int?)
-  Unknown(params~ : Array[Int?], terminal~ : Char)
+  ScrollUp(Int32?)
+  ScrollDown(Int32?)
+  Unknown(params~ : Array[Int32?], terminal~ : Char)
 } derive(Debug, Eq)
 
 ///|
-fn Control::of_csi_params(params : Array[Int?], terminal~ : Char) -> Control {
+fn Control::of_csi_params(params : Array[Int32?], terminal~ : Char) -> Control {
   let param = i => params.get(i).unwrap_or(None)
   let n = param(0)
   let unknown = () => Control::Unknown(params~, terminal~)
@@ -89,7 +89,9 @@ fn Control::of_csi_params(params : Array[Int?], terminal~ : Char) -> Control {
 
 ///|
 pub fn Control::to_bytes(self : Control) -> Bytes {
-  let csi = fn(n : Int?, terminal : String) { esc_string("[\{opt_int(n)}\{terminal}") }
+  let csi = fn(n : Int32?, terminal : String) {
+    esc_string("[\{opt_int(n)}\{terminal}")
+  }
   match self {
     CursorUp(n) => csi(n, "A")
     CursorDown(n) => csi(n, "B")
@@ -120,7 +122,7 @@ pub fn Control::to_bytes(self : Control) -> Bytes {
 
 ///|
 pub fn Control::to_string_hum(self : Control) -> String {
-  let named = fn(name : String, n : Int?) {
+  let named = fn(name : String, n : Int32?) {
     match n {
       None => "(\{name})"
       Some(n) => "(\{name}:\{n})"
@@ -139,7 +141,8 @@ pub fn Control::to_string_hum(self : Control) -> String {
     CursorToPos(Some(n), None) => "(CursorToPos:\{n};1)"
     CursorToPos(None, Some(m)) => "(CursorToPos:1;\{m})"
     CursorToPos(Some(n), Some(m)) => "(CursorToPos:\{n};\{m})"
-    EraseDisplay(None) | EraseDisplay(Some(ToScreenEnd)) => "(EraseScreen:ToEnd)"
+    EraseDisplay(None) | EraseDisplay(Some(ToScreenEnd)) =>
+      "(EraseScreen:ToEnd)"
     EraseDisplay(Some(ToScreenStart)) => "(EraseScreen:ToStart)"
     EraseDisplay(Some(WholeScreen)) => "(EraseScreen)"
     EraseDisplay(Some(ScreenAndScrollback)) => "(EraseScreen:AndScrollback)"
@@ -185,18 +188,18 @@ pub(all) enum PrivateModeAction {
 ///|
 /// A DEC private mode sequence such as `ESC [ ? 25 h`.
 pub(all) struct PrivateMode {
-  modes : Array[Int]
+  modes : Array[Int32]
   action : PrivateModeAction
 } derive(Debug, Eq)
 
 ///|
 fn PrivateMode::of_csi_params(
-  params : ArrayView[Int?],
+  params : ArrayView[Int32?],
   terminal~ : Char,
 ) -> PrivateMode? {
   let action = match terminal {
     'h' => Some(PrivateModeAction::Set)
-    'l' => Some(PrivateModeAction::Reset)
+    'l' => Some(Reset)
     _ => None
   }
   let modes = []
@@ -206,7 +209,7 @@ fn PrivateMode::of_csi_params(
     }
   }
   match action {
-    Some(action) if !modes.is_empty() => Some({ modes, action })
+    Some(action) if !modes.is_empty() => Some({ modes, action, })
     _ => None
   }
 }
@@ -286,7 +289,7 @@ pub fn Osc::to_bytes_hum(self : Osc) -> Bytes {
 pub(all) enum DsrQuery {
   DeviceStatus
   CursorPosition
-  Other(Int)
+  Other(Int32)
 } derive(Debug, Eq)
 
 ///|
@@ -296,11 +299,11 @@ pub(all) struct Dsr {
 } derive(Debug, Eq)
 
 ///|
-fn Dsr::of_params(params : ArrayView[Int?]) -> Dsr? {
+fn Dsr::of_params(params : ArrayView[Int32?]) -> Dsr? {
   match params {
-    [Some(5)] => Some({ query: DeviceStatus })
-    [Some(6)] => Some({ query: CursorPosition })
-    [Some(n)] => Some({ query: Other(n) })
+    [Some(5)] => Some({ query: DeviceStatus, })
+    [Some(6)] => Some({ query: CursorPosition, })
+    [Some(n)] => Some({ query: Other(n), })
     _ => None
   }
 }
@@ -374,9 +377,7 @@ fn escaped(s : BytesView) -> Bytes {
       c => {
         let code = c.to_int()
         buf.write_bytes(
-          @bstr.of_string(
-            "\\\{code / 100}\{code / 10 % 10}\{code % 10}",
-          ),
+          @bstr.of_string("\\\{code / 100}\{code / 10 % 10}\{code % 10}"),
         )
       }
     }

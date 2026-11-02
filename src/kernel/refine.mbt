@@ -15,13 +15,16 @@ pub type StructuredHunk = @pd.Hunk[Array[(Tag, Bytes)]]
 /// followed by the whitespace `ws`; this collapses consecutive whitespace as
 /// tightly as possible, but some consecutive whitespace does not get collapsed.
 pub(all) enum Piece {
-  Newline(Int, Bytes?)
+  Newline(Int32, Bytes?)
   Word(Bytes)
 } derive(Debug, Eq)
 
 ///|
 /// Splits lines, already split into words, into an array of pieces.
-fn explode_internal(lines : ArrayView[Array[Bytes]], keep_ws~ : Bool) -> Array[Piece] {
+fn explode_internal(
+  lines : ArrayView[Array[Bytes]],
+  keep_ws~ : Bool,
+) -> Array[Piece] {
   let words : Array[Piece] = []
   for line in lines {
     match line {
@@ -71,9 +74,13 @@ fn explode_internal(lines : ArrayView[Array[Bytes]], keep_ws~ : Bool) -> Array[P
 /// Splits lines into an array of pieces.
 pub fn explode(lines : ArrayView[Bytes], keep_ws~ : Bool) -> Array[Piece] {
   let words = if keep_ws {
-    [ for line in lines => split(line, keep_ws~) ]
+    [
+      for line in lines => split(line, keep_ws~)
+    ]
   } else {
-    [ for line in lines => whitespace_ignorant_split(line) ]
+    [
+      for line in lines => whitespace_ignorant_split(line)
+    ]
   }
   explode_internal(words, keep_ws~)
 }
@@ -101,10 +108,12 @@ fn collapse_structured(
     line.push((flag, @bstr.concat(segment)))
     segment.clear()
   }
-  let newline = i => for _ in 0..<i {
-    finish_segment()
-    lines.push(line)
-    line = []
+  let newline = i => {
+    for _ in 0..<i {
+      finish_segment()
+      lines.push(line)
+      line = []
+    }
   }
   for range in ranges {
     // When calling collapse, we always call `prev_only` or `next_only` first,
@@ -149,7 +158,9 @@ fn collapse_structured(
       // This branch was unreachable in regression tests, but it can't be proven
       // unreachable in all cases. Rather than fail, drop this whitespace.
       if !is_ws(text) {
-        abort("Invariant violated: collapse got a line not terminated with a newline")
+        abort(
+          "Invariant violated: collapse got a line not terminated with a newline",
+        )
       }
     }
   }
@@ -175,16 +186,20 @@ fn collapse(
     }
   }
   [
-    for line in collapse_structured(ranges, kind~) => @bstr.concat([
-      for segment in line => {
-        let (tag, word) = segment
-        match tag {
-          Same => apply(rule_same, word)
-          Prev => apply(rule_prev, word)
-          Next => apply(rule_next, word)
-        }
-      }
-    ])
+    for line in collapse_structured(ranges, kind~) => {
+      @bstr.concat(
+        [
+          for segment in line => {
+            let (tag, word) = segment
+            match tag {
+              Same => apply(rule_same, word)
+              Prev => apply(rule_prev, word)
+              Next => apply(rule_next, word)
+            }
+          }
+        ],
+      )
+    }
   ]
 }
 
@@ -194,19 +209,21 @@ fn diff_pieces(
   prev_pieces~ : Array[Piece],
   next_pieces~ : Array[Piece],
   keep_ws~ : Bool,
-  word_big_enough~ : Int,
+  word_big_enough~ : Int32,
 ) -> Array[@pd.Hunk[Piece]] {
-  let transform = (piece : Piece) => match piece {
-    Word(s) => if keep_ws { s } else { remove_ws(s) }
-    Newline(lines, trailing) =>
-      if keep_ws {
-        let newlines = if lines > 0 { Bytes::make(lines, b'\n') } else { b"" }
-        newlines + trailing.unwrap_or(b"")
-      } else if lines == 0 {
-        b""
-      } else {
-        b" "
-      }
+  let transform = (piece : Piece) => {
+    match piece {
+      Word(s) => if keep_ws { s } else { remove_ws(s) }
+      Newline(lines, trailing) =>
+        if keep_ws {
+          let newlines = if lines > 0 { Bytes::make(lines, b'\n') } else { b"" }
+          newlines + trailing.unwrap_or(b"")
+        } else if lines == 0 {
+          b""
+        } else {
+          b" "
+        }
+    }
   }
   @pd.get_hunks(
     transform~,
@@ -222,15 +239,19 @@ fn diff_pieces(
 fn ranges_are_just_whitespace(ranges : ArrayView[@pd.Range[Piece]]) -> Bool {
   ranges
   .iter()
-  .all(range => match range {
-    Prev(pieces, _) | Next(pieces, _) =>
-      pieces
-      .iter()
-      .all(piece => match piece {
-        Word(s) => remove_ws(s).is_empty()
-        Newline(_, _) => true
-      })
-    _ => true
+  .all(range => {
+    match range {
+      Prev(pieces, _) | Next(pieces, _) =>
+        pieces
+        .iter()
+        .all(piece => {
+          match piece {
+            Word(s) => remove_ws(s).is_empty()
+            Newline(_, _) => true
+          }
+        })
+      _ => true
+    }
   })
 }
 
@@ -277,16 +298,23 @@ fn split_for_readability(
 }
 
 ///|
-fn words_of_lines(lines : ArrayView[Bytes], keep_ws~ : Bool) -> Array[Array[Bytes]] {
+fn words_of_lines(
+  lines : ArrayView[Bytes],
+  keep_ws~ : Bool,
+) -> Array[Array[Bytes]] {
   if keep_ws {
-    [ for line in lines => split(line, keep_ws~) ]
+    [
+      for line in lines => split(line, keep_ws~)
+    ]
   } else {
-    [ for line in lines => whitespace_ignorant_split(line) ]
+    [
+      for line in lines => whitespace_ignorant_split(line)
+    ]
   }
 }
 
 ///|
-fn word_count(lines : ArrayView[Array[Bytes]]) -> Int {
+fn word_count(lines : ArrayView[Array[Bytes]]) -> Int32 {
   lines.fold(init=0, (acc, line) => acc + line.length())
 }
 
@@ -296,7 +324,7 @@ fn word_count(lines : ArrayView[Array[Bytes]]) -> Int {
 fn first_line_of_words(
   lines : ArrayView[Array[Bytes]],
   word_breaks : Map[Bytes, Bool],
-) -> Map[Bytes, Int] {
+) -> Map[Bytes, Int32] {
   let found = Map([])
   for i, line in lines {
     for word in line {
@@ -334,7 +362,7 @@ fn words_break_heuristic(
     return [(prev_words, next_words)]
   }
   // Count word frequencies.
-  let word_freq : Map[Bytes, (Int, Int)] = Map([])
+  let word_freq : Map[Bytes, (Int32, Int32)] = Map([])
   for line in prev_words {
     for word in line {
       let (cnt, other) = word_freq.get(word).unwrap_or((0, 0))
@@ -403,10 +431,12 @@ fn words_break_heuristic(
   let mut last_next_i = 0
   for pair in line_breaks {
     let (prev_i, next_i) = pair
-    arrays.push((
-      prev_words[last_prev_i:prev_i].to_owned(),
-      next_words[last_next_i:next_i].to_owned(),
-    ))
+    arrays.push(
+      (
+        prev_words[last_prev_i:prev_i].to_owned(),
+        next_words[last_next_i:next_i].to_owned(),
+      ),
+    )
     last_prev_i = prev_i
     last_next_i = next_i
   }
@@ -414,10 +444,12 @@ fn words_break_heuristic(
 }
 
 ///|
-fn line_length_so_far(len_so_far : Int, tokens : ArrayView[Piece]) -> Int {
-  tokens.fold(init=len_so_far, (len, token) => match token {
-    Newline(_, _) => 0
-    Word(word) => len + word.length()
+fn line_length_so_far(len_so_far : Int32, tokens : ArrayView[Piece]) -> Int32 {
+  tokens.fold(init=len_so_far, (len, token) => {
+    match token {
+      Newline(_, _) => 0
+      Word(word) => len + word.length()
+    }
   })
 }
 
@@ -430,16 +462,17 @@ fn make_newline() -> @pd.Range[Piece] {
 /// Takes token pairs from `start` until we exceed `max_len` or hit a newline.
 /// Returns (new length so far, new range, index of the next token, hit newline).
 fn take_until_max(
-  len_so_far : Int,
+  len_so_far : Int32,
   tokenpairs : Array[(Piece, Piece)],
-  start : Int,
-  max_len : Int,
-) -> (Int, @pd.Range[Piece], Int, Bool) {
+  start : Int32,
+  max_len : Int32,
+) -> (Int32, @pd.Range[Piece], Int32, Bool) {
   let mut len = len_so_far
   let mut i = start
   while i < tokenpairs.length() {
     match tokenpairs[i].0 {
-      Newline(_, _) => return (0, Same(tokenpairs[start:i + 1].to_owned()), i + 1, true)
+      Newline(_, _) =>
+        return (0, Same(tokenpairs[start:i + 1].to_owned()), i + 1, true)
       Word(word) => {
         let wordlen = word.length()
         if wordlen + len > max_len && len > 0 {
@@ -504,7 +537,7 @@ fn split_long_lines_of_ranges(
 
 ///|
 fn[A] refine_internal(
-  mark_newline_changes? : Bool = false,
+  mark_newline_changes~ : Bool = false,
   map_non_replace~ : (Bool, @pd.Range[Bytes]) -> Array[@pd.Range[A]],
   line_is_ws~ : (A) -> Bool,
   collapse_range~ : (
@@ -519,7 +552,7 @@ fn[A] refine_internal(
   keep_ws~ : Bool,
   split_long_lines~ : Bool,
   interleave~ : Bool,
-  word_big_enough~ : Int,
+  word_big_enough~ : Int32,
   hunks : ArrayView[@pd.Hunk[Bytes]],
 ) -> Array[@pd.Hunk[A]] {
   let produce_unified_lines_option = produce_unified_lines
@@ -530,7 +563,12 @@ fn[A] refine_internal(
   ) => {
     let prev_pieces = explode_internal(prev_words, keep_ws~)
     let next_pieces = explode_internal(next_words, keep_ws~)
-    let sub_diff = diff_pieces(prev_pieces~, next_pieces~, keep_ws~, word_big_enough~)
+    let sub_diff = diff_pieces(
+      prev_pieces~,
+      next_pieces~,
+      keep_ws~,
+      word_big_enough~,
+    )
     // Smash the hunks' ranges all together.
     let sub_diff = @pd.ranges(sub_diff)
     // Break it up where lines are too long.
@@ -552,14 +590,18 @@ fn[A] refine_internal(
     for piece in sub_diff_pieces {
       let sub_prev = @pd.prev_only(piece)
       let sub_next = @pd.next_only(piece)
-      let all_same = (ranges : Array[@pd.Range[Piece]]) => ranges
+      let all_same = (ranges : Array[@pd.Range[Piece]]) => {
+        ranges
         .iter()
-        .all(range => match range {
-          Same(_) => true
-          Prev(a, _) | Next(a, _) =>
-            !keep_ws && a.iter().all(token => token is Newline(_, _))
-          _ => false
+        .all(range => {
+          match range {
+            Same(_) => true
+            Prev(a, _) | Next(a, _) =>
+              !keep_ws && a.iter().all(token => token is Newline(_, _))
+            _ => false
+          }
         })
+      }
       let prev_all_same = all_same(sub_prev)
       let next_all_same = all_same(sub_next)
       let produce_unified_lines = produce_unified_lines_option &&
@@ -593,7 +635,8 @@ fn[A] refine_internal(
         match (produce_unified_lines, prev_all_same, next_all_same) {
           (true, true, false) => Unified(next_ar, move_kind)
           (true, false, true) => Unified(prev_ar, move_kind)
-          (false, _, _) | (_, false, false) => Replace(prev_ar, next_ar, move_kind)
+          (false, _, _) | (_, false, false) =>
+            Replace(prev_ar, next_ar, move_kind)
           _ => abort("refine: unexpected unified range")
         }
       }
@@ -632,12 +675,12 @@ fn tag_same(line : Bytes) -> Array[(Tag, Bytes)] {
 ///|
 /// The same as `refine` except returns structured data.
 pub fn refine_structured(
-  mark_newline_changes? : Bool = false,
+  mark_newline_changes~ : Bool = false,
   produce_unified_lines~ : Bool,
   keep_ws~ : Bool,
   split_long_lines~ : Bool,
   interleave~ : Bool,
-  word_big_enough~ : Int,
+  word_big_enough~ : Int32,
   hunks : ArrayView[@pd.Hunk[Bytes]],
 ) -> Array[StructuredHunk] {
   refine_internal(
@@ -653,9 +696,9 @@ pub fn refine_structured(
       // When `mark_newline_changes` is true, we preserve whitespace-only lines as
       // changes rather than dropping them. This is to have accurate line counts
       // for side-by-side diffs.
-      let droppable = (a : Array[Bytes]) => !mark_newline_changes &&
-        !keep_ws &&
-        a.iter().all(is_ws)
+      let droppable = (a : Array[Bytes]) => {
+        !mark_newline_changes && !keep_ws && a.iter().all(is_ws)
+      }
       match range {
         Next(a, None) if droppable(a) =>
           [Same([ for line in a => (tag_same(line), tag_same(line)) ])]
@@ -686,17 +729,21 @@ pub fn refine_structured(
 pub fn unrefined_structured(
   hunks : ArrayView[@pd.Hunk[Bytes]],
 ) -> Array[StructuredHunk] {
-  let tag_array = (tag : Tag, arr : Array[Bytes]) => [
-    for line in arr => [(tag, line)]
-  ]
-  @pd.concat_map_ranges(hunks, range => match range {
-    Same(same) =>
-      [Same([ for pair in same => (tag_same(pair.0), tag_same(pair.1)) ])]
-    Prev(prev, move_kind) => [Prev(tag_array(Prev, prev), move_kind)]
-    Next(next, move_kind) => [Next(tag_array(Next, next), move_kind)]
-    Replace(prev, next, move_id) =>
-      [Replace(tag_array(Prev, prev), tag_array(Next, next), move_id)]
-    Unified(lines, move_id) => [Unified(tag_array(Same, lines), move_id)]
+  let tag_array = (tag : Tag, arr : Array[Bytes]) => {
+    [
+      for line in arr => [(tag, line)]
+    ]
+  }
+  @pd.concat_map_ranges(hunks, range => {
+    match range {
+      Same(same) =>
+        [Same([ for pair in same => (tag_same(pair.0), tag_same(pair.1)) ])]
+      Prev(prev, move_kind) => [Prev(tag_array(Prev, prev), move_kind)]
+      Next(next, move_kind) => [Next(tag_array(Next, next), move_kind)]
+      Replace(prev, next, move_id) =>
+        [Replace(tag_array(Prev, prev), tag_array(Next, next), move_id)]
+      Unified(lines, move_id) => [Unified(tag_array(Same, lines), move_id)]
+    }
   })
 }
 
@@ -713,7 +760,7 @@ pub fn refine(
   keep_ws~ : Bool,
   split_long_lines~ : Bool,
   interleave~ : Bool,
-  word_big_enough~ : Int,
+  word_big_enough~ : Int32,
   hunks : ArrayView[@pd.Hunk[Bytes]],
 ) -> Array[@pd.Hunk[Bytes]] {
   let rule_prev = rules.word_prev
@@ -729,14 +776,23 @@ pub fn refine(
     interleave~,
     word_big_enough~,
     hunks,
-    map_non_replace=(keep_ws, range) => match range {
-      Next(a, _) if !keep_ws && a.iter().all(is_ws) =>
-        [Same([ for line in a => (line, line) ])]
-      Prev(a, _) if !keep_ws && a.iter().all(is_ws) => []
-      Replace(_, _, _) => abort("refine: unexpected Replace")
-      range => [range]
+    map_non_replace=(keep_ws, range) => {
+      match range {
+        Next(a, _) if !keep_ws && a.iter().all(is_ws) =>
+          [Same([ for line in a => (line, line) ])]
+        Prev(a, _) if !keep_ws && a.iter().all(is_ws) => []
+        Replace(_, _, _) => abort("refine: unexpected Replace")
+        range => [range]
+      }
     },
-    collapse_range=(prev_all_same, next_all_same, sub_prev, sub_next, move_kind, produce_unified_lines) => {
+    collapse_range=(
+      prev_all_same,
+      next_all_same,
+      sub_prev,
+      sub_next,
+      move_kind,
+      produce_unified_lines,
+    ) => {
       let collapse_with = (ranges, rule_same, kind) => {
         collapse(ranges, rule_same~, rule_prev~, rule_next~, kind~, output~)
       }
@@ -790,12 +846,12 @@ pub fn refine(
 ///|
 /// Output a hunk list, usually from `diff` or `refine`, to a string.
 pub fn output_to_string(
-  print_global_header? : Bool = false,
+  print_global_header~ : Bool = false,
   file_names~ : (FileName, FileName),
   rules~ : Rules,
   output~ : Output,
   location_style~ : LocationStyle,
-  platform? : Platform = Platform::without_unix(),
+  platform~ : Platform = Platform::without_unix(),
   hunks : ArrayView[@pd.Hunk[Bytes]],
 ) -> Bytes {
   let lines = []
@@ -815,12 +871,12 @@ pub fn output_to_string(
 ///|
 pub fn output_to_string_side_by_side(
   annotation_gutter? : AnnotationGutter,
-  width_override? : Int,
+  width_override? : Int32,
   file_names~ : (FileName, FileName),
   rules~ : Rules,
   wrap_or_truncate~ : WrapOrTruncate,
   output~ : Output,
-  platform? : Platform = Platform::without_unix(),
+  platform~ : Platform = Platform::without_unix(),
   hunks : ArrayView[StructuredHunk],
 ) -> Bytes {
   let (prev_file, next_file) = file_names
@@ -857,19 +913,19 @@ pub fn output_to_string_side_by_side(
 /// Runs the equivalent of the command line version of patdiff on `prev` and
 /// `next`.
 pub fn patdiff(
-  context? : Int = DEFAULT_CONTEXT,
-  keep_ws? : Bool = false,
-  find_moves? : Bool = false,
-  rules? : Rules = Rules::default(),
-  output? : Output = Ansi,
-  produce_unified_lines? : Bool = true,
-  split_long_lines? : Bool = true,
-  print_global_header? : Bool = false,
-  location_style? : LocationStyle = Diff,
-  interleave? : Bool = true,
+  context~ : Int32 = DEFAULT_CONTEXT,
+  keep_ws~ : Bool = false,
+  find_moves~ : Bool = false,
+  rules~ : Rules = Rules::default(),
+  output~ : Output = Ansi,
+  produce_unified_lines~ : Bool = true,
+  split_long_lines~ : Bool = true,
+  print_global_header~ : Bool = false,
+  location_style~ : LocationStyle = Diff,
+  interleave~ : Bool = true,
   float_tolerance? : Double,
-  line_big_enough? : Int = DEFAULT_LINE_BIG_ENOUGH,
-  word_big_enough? : Int = DEFAULT_WORD_BIG_ENOUGH,
+  line_big_enough~ : Int32 = DEFAULT_LINE_BIG_ENOUGH,
+  word_big_enough~ : Int32 = DEFAULT_WORD_BIG_ENOUGH,
   prev~ : DiffInput,
   next~ : DiffInput,
 ) -> Bytes {

@@ -78,5 +78,5 @@ pub(all) struct DiffInput {
 ///|
 /// A `DiffInput` from UTF-8 text.
 pub fn DiffInput::of_string(name : StringView, text : StringView) -> DiffInput {
-  { name: @bstr.of_string(name), text: @bstr.of_string(text) }
+  { name: @bstr.of_string(name), text: @bstr.of_string(text), }
 }

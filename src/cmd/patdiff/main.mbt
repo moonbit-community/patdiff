@@ -28,7 +28,7 @@ priv struct Flag {
 
 ///|
 fn no_arg(name : String, doc : String) -> Flag {
-  { name, aliases: [], kind: NoArg, doc }
+  { name, aliases: [], kind: NoArg, doc, }
 }
 
 ///|
@@ -36,46 +36,88 @@ fn with_arg(
   name : String,
   arg : String,
   doc : String,
-  aliases? : Array[String] = [],
+  aliases~ : Array[String] = [],
 ) -> Flag {
-  { name, aliases, kind: WithArg(arg), doc }
+  { name, aliases, kind: WithArg(arg), doc, }
 }
 
 ///|
 fn flags() -> Array[Flag] {
   let styles = @kernel.LocationStyle::all().map(s => s.to_string()).join("|")
   [
-    with_arg("alt-next", "NAME", "Mask next filename with NAME", aliases=["alt-new"]),
-    with_arg("alt-prev", "NAME", "Mask prev filename with NAME", aliases=["alt-old"]),
+    with_arg("alt-next", "NAME", "Mask next filename with NAME", aliases=[
+      "alt-new",
+    ]),
+    with_arg("alt-prev", "NAME", "Mask prev filename with NAME", aliases=[
+      "alt-old",
+    ]),
     no_arg("ansi", "Output in ASCII with ANSI escape codes"),
-    no_arg("ascii", "Output in ASCII with no ANSI escape codes (implies unrefined diff)"),
-    with_arg("context", "NUM", "Show lines of unchanged context before and after changes"),
+    no_arg(
+      "ascii", "Output in ASCII with no ANSI escape codes (implies unrefined diff)",
+    ),
+    with_arg(
+      "context", "NUM", "Show lines of unchanged context before and after changes",
+    ),
     no_arg("default", "Use the default configuration instead of ~/.patdiff"),
-    no_arg("dont-produce-unified-lines", "Don't produce unified lines (this makes the diff unambiguous even if color is stripped)"),
+    no_arg(
+      "dont-produce-unified-lines", "Don't produce unified lines (this makes the diff unambiguous even if color is stripped)",
+    ),
     no_arg("double-check", "If files seem identical, double check with cmp"),
-    with_arg("exclude", "REGEXP", "exclude files matching this pattern when comparing two directories (overrides include patterns)"),
-    with_arg("file", "FILE", "Use FILE as configuration file instead of ~/.patdiff"),
-    no_arg("find-moves", "Try to find and render moves. If -dont-produce-unified-lines is set moves will not be found."),
-    with_arg("float-tolerance", "PERCENT", "Consider strings equal if only difference is floats changing within PERCENT"),
-    no_arg("html", "Output in HTML format instead of default (ASCII with ANSI escape codes)"),
-    with_arg("include", "REGEXP", "include files matching this pattern when comparing two directories"),
+    with_arg(
+      "exclude", "REGEXP", "exclude files matching this pattern when comparing two directories (overrides include patterns)",
+    ),
+    with_arg(
+      "file", "FILE", "Use FILE as configuration file instead of ~/.patdiff",
+    ),
+    no_arg(
+      "find-moves", "Try to find and render moves. If -dont-produce-unified-lines is set moves will not be found.",
+    ),
+    with_arg(
+      "float-tolerance", "PERCENT", "Consider strings equal if only difference is floats changing within PERCENT",
+    ),
+    no_arg(
+      "html", "Output in HTML format instead of default (ASCII with ANSI escape codes)",
+    ),
+    with_arg(
+      "include", "REGEXP", "include files matching this pattern when comparing two directories",
+    ),
     no_arg("keep-whitespace", "Consider whitespace when comparing lines"),
-    with_arg("line-big-enough", "NUM", "Limit line-level semantic cleanup to the matches of length less than NUM lines"),
-    with_arg("location-style", "<\{styles}>", "how to format location information in hunk headers"),
+    with_arg(
+      "line-big-enough", "NUM", "Limit line-level semantic cleanup to the matches of length less than NUM lines",
+    ),
+    with_arg(
+      "location-style",
+      "<\{styles}>",
+      "how to format location information in hunk headers",
+    ),
     with_arg("make-config", "FILE", "Write default configuration file"),
-    no_arg("mask-uniques", "When comparing directories, don't compare against /dev/null"),
-    no_arg("no-interleave", "Don't attempt to split up large hunks near equalities"),
-    no_arg("no-semantic-cleanup", "Don't do any semantic cleanup; let small, spurious matches survive"),
+    no_arg(
+      "mask-uniques", "When comparing directories, don't compare against /dev/null",
+    ),
+    no_arg(
+      "no-interleave", "Don't attempt to split up large hunks near equalities",
+    ),
+    no_arg(
+      "no-semantic-cleanup", "Don't do any semantic cleanup; let small, spurious matches survive",
+    ),
     no_arg("quiet", "Report only whether files differ, not the details"),
     no_arg("reverse", "produce a diff that undoes the changes"),
     no_arg("shallow", "When comparing directories, don't recurse into subdirs"),
     with_arg("side-by-side", "<wrap|truncate>", "Render a diff side by side"),
     no_arg("split-long-lines", "Split long lines into multiple displayed lines"),
-    no_arg("text", "Treat all files as text (i.e. display diffs of binary file contents)"),
+    no_arg(
+      "text", "Treat all files as text (i.e. display diffs of binary file contents)",
+    ),
     no_arg("unrefined", "Don't highlight word differences between lines"),
-    with_arg("warn-if-no-trailing-newline-in-both", "BOOL", "warn when neither file ends in a newline, even though this does not constitute a diff (default: read from config, or true)"),
-    with_arg("width", "INT", "number of columns to use for side by side diff. If not provided defaults to current terminal width."),
-    with_arg("word-big-enough", "NUM", "Limit word-level semantic cleanup to the matches of length less than NUM words"),
+    with_arg(
+      "warn-if-no-trailing-newline-in-both", "BOOL", "warn when neither file ends in a newline, even though this does not constitute a diff (default: read from config, or true)",
+    ),
+    with_arg(
+      "width", "INT", "number of columns to use for side by side diff. If not provided defaults to current terminal width.",
+    ),
+    with_arg(
+      "word-big-enough", "NUM", "Limit word-level semantic cleanup to the matches of length less than NUM words",
+    ),
     no_arg("help", "print this help text and exit"),
     no_arg("version", "print the version of this build and exit"),
   ]
@@ -159,7 +201,11 @@ fn parse_args(args : ArrayView[String]) -> ParsedArgs raise UsageError {
       continue
     }
     let name = arg.trim_start(chars="-").to_owned()
-    let flag = if name == "?" { find_flag(all, "help") } else { find_flag(all, name) }
+    let flag = if name == "?" {
+      find_flag(all, "help")
+    } else {
+      find_flag(all, name)
+    }
     match flag.kind {
       NoArg => values.get_or_init(flag.name, () => []).push("")
       WithArg(_) => {
@@ -171,7 +217,7 @@ fn parse_args(args : ArrayView[String]) -> ParsedArgs raise UsageError {
       }
     }
   }
-  { values, anons }
+  { values, anons, }
 }
 
 ///|
@@ -181,7 +227,10 @@ fn ParsedArgs::has(self : ParsedArgs, name : String) -> Bool {
 
 ///|
 /// The value of a flag which may be given once.
-fn ParsedArgs::get(self : ParsedArgs, name : String) -> String? raise UsageError {
+fn ParsedArgs::get(
+  self : ParsedArgs,
+  name : String,
+) -> String? raise UsageError {
   match self.values.get(name) {
     None => None
     Some([value]) => Some(value)
@@ -190,11 +239,14 @@ fn ParsedArgs::get(self : ParsedArgs, name : String) -> String? raise UsageError
 }
 
 ///|
-fn ParsedArgs::get_int(self : ParsedArgs, name : String) -> Int? raise UsageError {
+fn ParsedArgs::get_int(
+  self : ParsedArgs,
+  name : String,
+) -> Int32? raise UsageError {
   match self.get(name) {
     None => None
     Some(value) =>
-      try Some(@string.parse_int(value)) catch {
+      Some(@string.parse_int(value)) catch {
         _ => raise UsageError("failed to parse -\{name} value \"\{value}\"")
       }
   }
@@ -204,7 +256,7 @@ fn ParsedArgs::get_int(self : ParsedArgs, name : String) -> Int? raise UsageErro
 /// `Percent.of_string` from Core: a number followed by `x`, `%` or `bp`.
 fn parse_percent(value : String) -> Double? {
   let parse = (number : StringView, scale : Double) => {
-    try Some(@string.parse_double(number) * scale) catch {
+    Some(@string.parse_double(number) * scale) catch {
       _ => None
     }
   }
@@ -226,7 +278,12 @@ fn files_from_stdin() -> (Bytes, Bytes) raise {
   let next = Buffer()
   let add_prefixes = [b"+", b">"]
   let remove_prefixes = [b"-", b"<"]
-  let process = (line : Bytes, skip : Array[Bytes], blank : Array[Bytes], out : Buffer) => {
+  let process = (
+    line : Bytes,
+    skip : Array[Bytes],
+    blank : Array[Bytes],
+    out : Buffer,
+  ) => {
     if !skip.iter().any(prefix => line.has_prefix(prefix)) {
       match blank.search_by(prefix => line.has_prefix(prefix)) {
         None => out.write_bytes(line)
@@ -270,7 +327,7 @@ fn output_flag(args : ParsedArgs) -> @kernel.Output? raise UsageError {
 }
 
 ///|
-fn make_config(file : Bytes) -> Int raise {
+fn make_config(file : Bytes) -> Int32 raise {
   let should_write = if @sys.stat(file) is Some(_) {
     @sys.print_stdout(file + b" already exists. Overwrite? (y/n) ")
     @sys.flush_stdout()
@@ -317,7 +374,9 @@ fn override_config(
     let value = args.get_int(name)
     if no_semantic_cleanup {
       if value is Some(_) {
-        raise @lib.Failure("Cannot pass both [-\{name}] and [-no-semantic-cleanup]")
+        raise @lib.Failure(
+          "Cannot pass both [-\{name}] and [-no-semantic-cleanup]",
+        )
       }
       Some(1)
     } else {
@@ -337,7 +396,9 @@ fn override_config(
       match parse_percent(value) {
         Some(tolerance) => Some(Some(tolerance))
         None =>
-          raise UsageError("failed to parse -float-tolerance value \"\{value}\"")
+          raise UsageError(
+            "failed to parse -float-tolerance value \"\{value}\"",
+          )
       }
   }
   let location_style = match args.get("location-style") {
@@ -361,10 +422,10 @@ fn override_config(
   let produce_unified_lines = flag_set("dont-produce-unified-lines", false)
   let alt = (name : String) => args.get(name).map(s => Some(@bstr.of_string(s)))
   config.override_with(
-    output?=output,
+    output?,
     unrefined?=flag_set("unrefined", true),
-    produce_unified_lines?=produce_unified_lines,
-    float_tolerance?=float_tolerance,
+    produce_unified_lines?,
+    float_tolerance?,
     keep_ws?=flag_set("keep-whitespace", true),
     find_moves?=if produce_unified_lines is Some(false) {
       Some(false)
@@ -383,10 +444,10 @@ fn override_config(
     mask_uniques?=flag_set("mask-uniques", true),
     prev_alt?=alt("alt-prev"),
     next_alt?=alt("alt-next"),
-    location_style?=location_style,
+    location_style?,
     warn_if_no_trailing_newline_in_both?=warn_in_both,
     // Unlike the other flags, these always replace what the config file says.
-    side_by_side=side_by_side,
+    side_by_side~,
     width_override=args.get_int("width"),
   )
 }
@@ -397,7 +458,7 @@ fn compare_main(
   prev_file : Bytes,
   next_file : Bytes,
   output~ : @kernel.Output?,
-) -> Int raise {
+) -> Int32 raise {
   let filename = if args.has("default") {
     if args.has("file") {
       raise @lib.Failure("Cannot pass both [-default] and [-file]")
@@ -431,7 +492,9 @@ fn compare_main(
         (next_file, prev_file)
       }
       if exists(file) {
-        raise @lib.Failure("\{shown(dir)} is a directory, while \{shown(file)} is a file")
+        raise @lib.Failure(
+          "\{shown(dir)} is a directory, while \{shown(file)} is a file",
+        )
       }
       raise @lib.Failure(
         "\{shown(dir)} is a directory, while \{shown(file)} does not exist",
@@ -452,11 +515,18 @@ fn compare_main(
           )
         })
       }
-      @lib.diff_dirs(config, prev_dir=prev_file, next_dir=next_file, file_filter~)
+      @lib.diff_dirs(
+        config,
+        prev_dir=prev_file,
+        next_dir=next_file,
+        file_filter~,
+      )
     }
     (false, false) => {
       if !include_.is_empty() || !exclude.is_empty() {
-        raise @lib.Failure("Can only specify -include or -exclude when diffing two dirs")
+        raise @lib.Failure(
+          "Can only specify -include or -exclude when diffing two dirs",
+        )
       }
       @lib.diff_files(
         config,
@@ -473,7 +543,7 @@ fn compare_main(
 }
 
 ///|
-fn run(argv : ArrayView[String]) -> Int raise {
+fn run(argv : ArrayView[String]) -> Int32 raise {
   let args = parse_args(argv)
   if args.has("help") {
     @sys.print_stdout(@bstr.of_string(usage()))
@@ -501,9 +571,11 @@ fn run(argv : ArrayView[String]) -> Int raise {
   } else {
     (prev_file, next_file)
   }
-  let cleanup = () => if temporary {
-    @sys.unlink(prev_file)
-    @sys.unlink(next_file)
+  let cleanup = () => {
+    if temporary {
+      @sys.unlink(prev_file)
+      @sys.unlink(next_file)
+    }
   }
   defer cleanup()
   compare_main(args, first, second, output~)
@@ -526,7 +598,7 @@ fn describe_error(err : Error) -> String {
 ///|
 fn main {
   let argv = @env.args()
-  let code = try run(argv[1:]) catch {
+  let code = run(argv[1:]) catch {
     UsageError(msg) => {
       @sys.print_stderr(
         @bstr.of_string(

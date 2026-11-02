@@ -8,7 +8,7 @@ pub type Style = Array[Attr]
 /// `"\x1b[1;38;5;1m"`, would invoke
 /// `style_of_sgr_params([Some(1), Some(38), Some(5), Some(1)])`, yielding
 /// `[Bold, Fg(Standard(Red))]`.
-pub fn style_of_sgr_params(params : ArrayView[Int?]) -> Style {
+pub fn style_of_sgr_params(params : ArrayView[Int32?]) -> Style {
   let codes = []
   for param in params {
     if param is Some(code) {
@@ -20,7 +20,7 @@ pub fn style_of_sgr_params(params : ArrayView[Int?]) -> Style {
     codes.push(0)
   }
   let style = []
-  let mut rest : ArrayView[Int] = codes
+  let mut rest : ArrayView[Int32] = codes
   while rest is [first, ..] {
     let n = match rest {
       [38 | 48 | 58, 2, _, _, _, ..] => 5
@@ -108,9 +108,7 @@ pub fn style_delta(
       let new_attrs = after_reset(added_style)
       let without_reset = []
       for old_attr in old_attrs {
-        if !new_attrs
-          .iter()
-          .any(new_attr => overrides(new_attr~, old_attr~)) &&
+        if !new_attrs.iter().any(new_attr => overrides(new_attr~, old_attr~)) &&
           old_attr.turn_off() is Some(off) {
           without_reset.push(off)
         }
@@ -169,9 +167,9 @@ pub fn style_closes(
 ) -> Bool {
   old_style
   .iter()
-  .all(old_attr => new_style
-    .iter()
-    .any(new_attr => overrides(new_attr~, old_attr~)))
+  .all(old_attr => {
+    new_style.iter().any(new_attr => overrides(new_attr~, old_attr~))
+  })
 }
 
 ///|

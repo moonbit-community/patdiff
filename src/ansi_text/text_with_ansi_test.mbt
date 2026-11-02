@@ -103,7 +103,11 @@ test "simplify_styles combines, shortens, and drops" {
 test "get_style_at_end" {
   let s = "\u{1b}[2A\u{1b}[3;1;2;4;38;5;250m some \u{1b}[22;48;5;1m text \u{1b}[58;5;32m"
   @test.assert_eq(
-    str(@ansi_text.style_to_string(@ansi_text.style_at_end(@ansi_text.parse(b(s))))),
+    str(
+      @ansi_text.style_to_string(
+        @ansi_text.style_at_end(@ansi_text.parse(b(s))),
+      ),
+    ),
     "\u{1b}[3;4;38;5;250;22;41;58;5;32m",
   )
 }
@@ -113,18 +117,26 @@ test "get_style_at_end handles resets" {
   let s1 = "\u{1b}[1;2;3;4;38;5;250m some \u{1b}[K\u{1b}[2;48;5;1m text \u{1b}[0m"
   let s2 = "\u{1b}[1;2;3;4;38;5;250m some \u{1b}[5i\u{1b}[2;48;5;1;0m text \u{1b}[1m"
   @test.assert_eq(
-    str(@ansi_text.style_to_string(@ansi_text.style_at_end(@ansi_text.parse(b(s1))))),
+    str(
+      @ansi_text.style_to_string(
+        @ansi_text.style_at_end(@ansi_text.parse(b(s1))),
+      ),
+    ),
     "\u{1b}[0m",
   )
   @test.assert_eq(
-    str(@ansi_text.style_to_string(@ansi_text.style_at_end(@ansi_text.parse(b(s2))))),
+    str(
+      @ansi_text.style_to_string(
+        @ansi_text.style_at_end(@ansi_text.parse(b(s2))),
+      ),
+    ),
     "\u{1b}[0;1m",
   )
 }
 
 ///|
 /// Splits `str` at `pos`, returning the serialized halves.
-fn split_strs(str : String, pos : Int) -> (Bytes, Bytes) {
+fn split_strs(str : String, pos : Int32) -> (Bytes, Bytes) {
   let (before, after) = @ansi_text.split(@ansi_text.parse(b(str)), pos~)
   (@ansi_text.to_bytes(before), @ansi_text.to_bytes(after))
 }
@@ -132,10 +144,12 @@ fn split_strs(str : String, pos : Int) -> (Bytes, Bytes) {
 ///|
 test "split in the middle" {
   let (before, after) = split_strs(
-    "\u{1b}[1;41m012345\u{1b}[2;32m6789ab\u{1b}[G\u{1b}[4;64mcdefgh\u{1b}[0m",
-    10,
+    "\u{1b}[1;41m012345\u{1b}[2;32m6789ab\u{1b}[G\u{1b}[4;64mcdefgh\u{1b}[0m", 10,
   )
-  @test.assert_eq(str(before), "\u{1b}[1;41m012345\u{1b}[2;32m6789\u{1b}[49;22;39m")
+  @test.assert_eq(
+    str(before),
+    "\u{1b}[1;41m012345\u{1b}[2;32m6789\u{1b}[49;22;39m",
+  )
   @test.assert_eq(
     str(after),
     "\u{1b}[41;2;32mab\u{1b}[G\u{1b}[4;64mcdefgh\u{1b}[0m",
@@ -153,8 +167,7 @@ test "split in the middle" {
 ///|
 test "split at a boundary" {
   let (before, after) = split_strs(
-    "\u{1b}[F\u{1b}[1;41m012345\u{1b}[2;32m6789ab\u{1b}[4;64mcdefgh\u{1b}[0m",
-    12,
+    "\u{1b}[F\u{1b}[1;41m012345\u{1b}[2;32m6789ab\u{1b}[4;64mcdefgh\u{1b}[0m", 12,
   )
   @test.assert_eq(
     str(before),
@@ -174,8 +187,7 @@ test "split at a boundary" {
 ///|
 test "split resets others" {
   let (before, after) = split_strs(
-    "\u{1b}[1;41m some \u{1b}[2;32m more \u{1b}[1K\u{1b}[4;74m text \u{1b}[0m",
-    14,
+    "\u{1b}[1;41m some \u{1b}[2;32m more \u{1b}[1K\u{1b}[4;74m text \u{1b}[0m", 14,
   )
   @test.assert_eq(
     str(before),

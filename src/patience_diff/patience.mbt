@@ -6,14 +6,14 @@
 /// A card in the patience game, with its backpointer. Following `tag` from the
 /// top of the last pile yields the longest increasing subsequence in reverse.
 priv struct Card {
-  value : (Int, Int)
+  value : (Int32, Int32)
   tag : Card?
 }
 
 ///|
 /// Index of the leftmost pile whose top is strictly greater than `x`, or `None`
 /// when `x` needs a new pile on the right.
-fn find_pile(piles : ArrayView[Card], x : Int) -> Int? {
+fn find_pile(piles : ArrayView[Card], x : Int32) -> Int32? {
   let n = piles.length()
   if n == 0 || piles[n - 1].value.0 < x {
     return None
@@ -41,8 +41,8 @@ fn find_pile(piles : ArrayView[Card], x : Int) -> Int? {
 /// http://en.wikipedia.org/wiki/Patience_sorting. Only the top of each pile is
 /// ever consulted, so a pile is represented by its top card alone.
 fn longest_increasing_subsequence(
-  pairs : ArrayView[(Int, Int)],
-) -> Array[(Int, Int)] {
+  pairs : ArrayView[(Int32, Int32)],
+) -> Array[(Int32, Int32)] {
   if pairs.is_empty() {
     return []
   }
@@ -54,7 +54,7 @@ fn longest_increasing_subsequence(
       Some(0) => None
       Some(i) => Some(piles[i - 1])
     }
-    let card = Card::{ value: x, tag }
+    let card = Card::{ value: x, tag, }
     match pile_opt {
       None => piles.push(card)
       Some(i) => piles[i] = card
@@ -77,7 +77,7 @@ fn longest_increasing_subsequence(
 /// same length as the size of the match. If the insert on the next side is a
 /// lot larger than the match it should be cleaned up, but most of the time it
 /// should be left alone.
-fn should_discard_if_other_side_equal(big_enough : Int) -> Int {
+fn should_discard_if_other_side_equal(big_enough : Int32) -> Int32 {
   100 / big_enough
 }
 
@@ -92,9 +92,9 @@ const SWITCH_TO_PLAIN_DIFF_DENOMINATOR = 10
 
 ///|
 priv enum LineMetadata {
-  UniqueInA(index_in_a~ : Int)
-  UniqueInAB(index_in_a~ : Int, index_in_b~ : Int)
-  NotUnique(occurrences_in_a~ : Int)
+  UniqueInA(index_in_a~ : Int32)
+  UniqueInAB(index_in_a~ : Int32, index_in_b~ : Int32)
+  NotUnique(occurrences_in_a~ : Int32)
 }
 
 ///|
@@ -102,15 +102,15 @@ priv enum LineMetadata {
 /// elements are unique for that to mean anything.
 fn[E : Hash + Eq] unique_lcs(
   alpha : ArrayView[E],
-  alo : Int,
-  ahi : Int,
+  alo : Int32,
+  ahi : Int32,
   bravo : ArrayView[E],
-  blo : Int,
-  bhi : Int,
-) -> Array[(Int, Int)]? {
+  blo : Int32,
+  bhi : Int32,
+) -> Array[(Int32, Int32)]? {
   // Map elements of a to their index iff they're unique, and otherwise to their
   // frequency in a.
-  let unique : @hashmap.HashMap[E, LineMetadata] = @hashmap.HashMap([])
+  let unique : @hashmap.HashMap[E, LineMetadata] = HashMap([])
   for pos in alo..<ahi {
     let x = alpha[pos]
     match unique.get(x) {
@@ -182,9 +182,14 @@ fn[E : Hash + Eq] unique_lcs(
 pub fn[E : Hash + Eq] matches(
   alpha : ArrayView[E],
   bravo : ArrayView[E],
-) -> Array[(Int, Int)] {
+) -> Array[(Int32, Int32)] {
   let found = []
-  fn recurse_matches(alo0 : Int, blo0 : Int, ahi : Int, bhi : Int) -> Unit {
+  fn recurse_matches(
+    alo0 : Int32,
+    blo0 : Int32,
+    ahi : Int32,
+    bhi : Int32,
+  ) -> Unit {
     // Tail calls of the recursion are expressed as iterations of this loop, so
     // that deep recursion needs a pathological input, not merely a big file.
     let mut alo = alo0
@@ -210,7 +215,7 @@ pub fn[E : Hash + Eq] matches(
         }
         break
       } else {
-        let plain_diff = fn(alo : Int, blo : Int) {
+        let plain_diff = fn(alo : Int32, blo : Int32) {
           plain_diff_iter_matches(alpha[alo:ahi], bravo[blo:bhi], (i1, i2) => {
             found.push((alo + i1, blo + i2))
           })
@@ -251,9 +256,11 @@ pub fn[E : Hash + Eq] matches(
 }
 
 ///|
-fn collapse_sequences(pairs : ArrayView[(Int, Int)]) -> Array[MatchingBlock] {
+fn collapse_sequences(
+  pairs : ArrayView[(Int32, Int32)],
+) -> Array[MatchingBlock] {
   let collapsed = []
-  let mut start : (Int, Int)? = None
+  let mut start : (Int32, Int32)? = None
   let mut length = 0
   for pair in pairs {
     let (i_a, i_b) = pair
@@ -273,7 +280,7 @@ fn collapse_sequences(pairs : ArrayView[(Int, Int)]) -> Array[MatchingBlock] {
     }
   }
   if start is Some((sa, sb)) && length != 0 {
-    collapsed.push({ prev_start: sa, next_start: sb, length })
+    collapsed.push({ prev_start: sa, next_start: sb, length, })
   }
   collapsed
 }
@@ -284,10 +291,10 @@ fn collapse_sequences(pairs : ArrayView[(Int, Int)]) -> Array[MatchingBlock] {
 /// Throw it away if its effective length is too small relative to its
 /// surrounding inserts and deletes.
 fn should_discard_match(
-  big_enough : Int,
-  left_change : Int,
-  right_change : Int,
-  block_len : Int,
+  big_enough : Int32,
+  left_change : Int32,
+  right_change : Int32,
+  block_len : Int32,
 ) -> Bool {
   let other_side = block_len + should_discard_if_other_side_equal(big_enough)
   block_len < big_enough &&
@@ -299,7 +306,7 @@ fn should_discard_match(
 }
 
 ///|
-fn change_between(left : MatchingBlock, right : MatchingBlock) -> Int {
+fn change_between(left : MatchingBlock, right : MatchingBlock) -> Int32 {
   @cmp.maximum(
     right.prev_start - left.prev_start,
     right.next_start - left.next_start,
@@ -310,7 +317,7 @@ fn change_between(left : MatchingBlock, right : MatchingBlock) -> Int {
 ///|
 /// See the "Semantic Chaff" section of https://neil.fraser.name/writing/diff/.
 fn basic_semantic_cleanup(
-  big_enough : Int,
+  big_enough : Int32,
   blocks : ArrayView[MatchingBlock],
 ) -> Array[MatchingBlock] {
   if big_enough <= 1 || blocks.is_empty() {
@@ -345,7 +352,7 @@ fn basic_semantic_cleanup(
 /// pair of consecutive matches and pretend to combine them into one match. If
 /// that match would be deleted by `basic_semantic_cleanup`, we delete both.
 fn advanced_semantic_cleanup(
-  big_enough : Int,
+  big_enough : Int32,
   blocks : ArrayView[MatchingBlock],
 ) -> Array[MatchingBlock] {
   if big_enough <= 1 || blocks.length() < 2 {
@@ -389,10 +396,13 @@ fn advanced_semantic_cleanup(
 ///|
 /// Eliminate small, semantically meaningless matches.
 fn semantic_cleanup(
-  big_enough : Int,
+  big_enough : Int32,
   blocks : ArrayView[MatchingBlock],
 ) -> Array[MatchingBlock] {
-  advanced_semantic_cleanup(big_enough, basic_semantic_cleanup(big_enough, blocks))
+  advanced_semantic_cleanup(
+    big_enough,
+    basic_semantic_cleanup(big_enough, blocks),
+  )
 }
 
 ///|
@@ -419,7 +429,7 @@ fn[E : Eq] combine_equalities(
           prev[grown.prev_start - 1] &&
           next[shrunk.next_start + shrunk.length - 1] ==
           next[grown.next_start - 1] {
-      shrunk = { ..shrunk, length: shrunk.length - 1 }
+      shrunk = { ..shrunk, length: shrunk.length - 1, }
       grown = {
         prev_start: grown.prev_start - 1,
         next_start: grown.next_start - 1,
@@ -449,17 +459,17 @@ priv struct Aligner[A, E] {
   prev_scorable : ArrayView[A]
   next_elts : ArrayView[E]
   next_scorable : ArrayView[A]
-  max_slide : Int
-  score : (Side, A, A) -> Int
+  max_slide : Int32
+  score : (Side, A, A) -> Int32
 }
 
 ///|
 fn[A, E] Aligner::score_side(
   self : Aligner[A, E],
   arr : ArrayView[A],
-  left : Int,
-  right : Int,
-) -> Int {
+  left : Int32,
+  right : Int32,
+) -> Int32 {
   let score_pair = (kind, i) => {
     if i - 1 < 0 || i >= arr.length() {
       100
@@ -474,11 +484,11 @@ fn[A, E] Aligner::score_side(
 /// `*_left` and `*_right` are exclusive indexes on either side of the region.
 fn[A, E] Aligner::score_boundary(
   self : Aligner[A, E],
-  prev_left : Int,
-  prev_right : Int,
-  next_left : Int,
-  next_right : Int,
-) -> Int {
+  prev_left : Int32,
+  prev_right : Int32,
+  next_left : Int32,
+  next_right : Int32,
+) -> Int32 {
   match (prev_left + 1 == prev_right, next_left + 1 == next_right) {
     // This shouldn't happen; it means the two blocks of equal elements touch
     // and should have been merged.
@@ -504,7 +514,7 @@ fn[A, E : Eq] Aligner::best_slide(
   self : Aligner[A, E],
   left : MatchingBlock,
   right : MatchingBlock,
-) -> Int {
+) -> Int32 {
   let mut best_score = self.score_boundary(
     left.prev_start + left.length - 1,
     right.prev_start,
@@ -525,7 +535,9 @@ fn[A, E : Eq] Aligner::best_slide(
       self.prev_elts[prev_left + 1] != self.prev_elts[prev_right] {
       break
     }
-    let score = self.score_boundary(prev_left, prev_right, next_left, next_right)
+    let score = self.score_boundary(
+      prev_left, prev_right, next_left, next_right,
+    )
     if score > best_score {
       best_score = score
       best_offset = -i
@@ -545,7 +557,9 @@ fn[A, E : Eq] Aligner::best_slide(
       self.prev_elts[prev_left] != self.prev_elts[prev_right - 1] {
       break
     }
-    let score = self.score_boundary(prev_left, prev_right, next_left, next_right)
+    let score = self.score_boundary(
+      prev_left, prev_right, next_left, next_right,
+    )
     if score > best_score {
       best_score = score
       best_offset = i
@@ -581,7 +595,7 @@ fn[A, E : Eq] Aligner::align(
         left = right
       }
       slide => {
-        let new_left = { ..left, length: left.length + slide }
+        let new_left = { ..left, length: left.length + slide, }
         if new_left.length > 0 {
           acc.push(new_left)
         }
@@ -608,9 +622,9 @@ fn[A, E : Eq] Aligner::align(
 /// boundaries.
 pub fn[A, E : Hash + Eq] get_matching_blocks(
   transform~ : (A) -> E,
-  big_enough? : Int = 1,
-  max_slide? : Int = 0,
-  score? : (Side, A, A) -> Int = (_, _, _) => 100,
+  big_enough~ : Int32 = 1,
+  max_slide~ : Int32 = 0,
+  score~ : (Side, A, A) -> Int32 = (_, _, _) => 100,
   prev~ : ArrayView[A],
   next~ : ArrayView[A],
 ) -> Array[MatchingBlock] {
@@ -635,7 +649,7 @@ pub fn[A, E : Hash + Eq] get_matching_blocks(
 }
 
 ///|
-fn[A] slice(ar : ArrayView[A], i : Int, j : Int) -> Array[A] {
+fn[A] slice(ar : ArrayView[A], i : Int32, j : Int32) -> Array[A] {
   if j <= i {
     []
   } else {
@@ -646,9 +660,9 @@ fn[A] slice(ar : ArrayView[A], i : Int, j : Int) -> Array[A] {
 ///|
 fn[A, E : Hash + Eq] get_ranges(
   transform~ : (A) -> E,
-  big_enough~ : Int,
-  max_slide~ : Int,
-  score~ : (Side, A, A) -> Int,
+  big_enough~ : Int32,
+  max_slide~ : Int32,
+  score~ : (Side, A, A) -> Int32,
   prev~ : ArrayView[A],
   next~ : ArrayView[A],
 ) -> Array[Range[A]] {
@@ -664,7 +678,7 @@ fn[A, E : Hash + Eq] get_ranges(
   let mut i = 0
   let mut j = 0
   for block in blocks {
-    let { prev_start: prev_index, next_start: next_index, length: size } = block
+    let { prev_start: prev_index, next_start: next_index, length: size, } = block
     // Throw away crossover matches.
     if prev_index < i || next_index < j {
       continue
@@ -682,7 +696,11 @@ fn[A, E : Hash + Eq] get_ranges(
     let next_stop = next_index + size
     if size != 0 {
       ranges.push(
-        Same([ for k in 0..<size => (prev[prev_index + k], next[next_index + k]) ]),
+        Same(
+          [
+            for k in 0..<size => (prev[prev_index + k], next[next_index + k])
+          ],
+        ),
       )
     }
     i = prev_stop
@@ -694,10 +712,10 @@ fn[A, E : Hash + Eq] get_ranges(
 ///|
 /// Turns indexes into line numbers, returning a new hunk.
 fn[A] create_hunk(
-  prev_start : Int,
-  prev_stop : Int,
-  next_start : Int,
-  next_stop : Int,
+  prev_start : Int32,
+  prev_stop : Int32,
+  next_start : Int32,
+  next_stop : Int32,
   ranges : Array[Range[A]],
 ) -> Hunk[A] {
   {
@@ -717,10 +735,10 @@ fn[A] create_hunk(
 /// See `get_matching_blocks` for `big_enough`, `max_slide` and `score`.
 pub fn[A, E : Hash + Eq] get_hunks(
   transform~ : (A) -> E,
-  context~ : Int,
-  big_enough? : Int = 1,
-  max_slide? : Int = 0,
-  score? : (Side, A, A) -> Int = (_, _, _) => 100,
+  context~ : Int32,
+  big_enough~ : Int32 = 1,
+  max_slide~ : Int32 = 0,
+  score~ : (Side, A, A) -> Int32 = (_, _, _) => 100,
   prev~ : ArrayView[A],
   next~ : ArrayView[A],
 ) -> Array[Hunk[A]] {

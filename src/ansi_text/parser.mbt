@@ -44,40 +44,53 @@ fn is_csi_final_byte(c : Byte) -> Bool {
 /// Final bytes that correspond to `Control` sequences we understand.
 fn is_control_final_byte(c : Byte) -> Bool {
   match c {
-    b'A' | b'B' | b'C' | b'D' | b'E' | b'F' | b'G' | b'H' | b'J' | b'K' | b'S' | b'T' =>
-      true
+    b'A'
+    | b'B'
+    | b'C'
+    | b'D'
+    | b'E'
+    | b'F'
+    | b'G'
+    | b'H'
+    | b'J'
+    | b'K'
+    | b'S'
+    | b'T' => true
     _ => false
   }
 }
 
 ///|
-fn parse_int_opt(s : Bytes) -> Int? {
+fn parse_int_opt(s : Bytes) -> Int32? {
   if s.is_empty() || !@bstr.for_all(s, c => is_between(c, b'0', b'9')) {
     return None
   }
-  try Some(@string.parse_int(@bstr.to_string(s))) catch {
+  Some(@string.parse_int(@bstr.to_string(s))) catch {
     _ => None
   }
 }
 
 ///|
-fn parse_params(params : Bytes) -> Array[Int?] {
+fn parse_params(params : Bytes) -> Array[Int32?] {
   if params.is_empty() {
     []
   } else {
-    [ for s in @bstr.split_on(params, b';') => parse_int_opt(s) ]
+    [
+      for s in @bstr.split_on(params, b';') => parse_int_opt(s)
+    ]
   }
 }
 
 ///|
 fn of_csi(private_prefix : Byte?, params : Bytes, terminal~ : Byte) -> Element {
-  let unknown = () => Element::Unknown(
-    UnknownEsc::of_csi(private_prefix, params, terminal~),
-  )
+  let unknown = () => {
+    Element::Unknown(UnknownEsc::of_csi(private_prefix, params, terminal~))
+  }
   let terminal_char = terminal.to_int().unsafe_to_char()
   match private_prefix {
     Some(b'?') =>
-      match PrivateMode::of_csi_params(parse_params(params), terminal=terminal_char) {
+      match
+        PrivateMode::of_csi_params(parse_params(params), terminal=terminal_char) {
         Some(pm) => PrivateMode(pm)
         None => unknown()
       }
@@ -91,7 +104,9 @@ fn of_csi(private_prefix : Byte?, params : Bytes, terminal~ : Byte) -> Element {
             None => unknown()
           }
         c if is_control_final_byte(c) =>
-          Control(Control::of_csi_params(parse_params(params), terminal=terminal_char))
+          Control(
+            Control::of_csi_params(parse_params(params), terminal=terminal_char),
+          )
         _ => unknown()
       }
   }
@@ -110,7 +125,7 @@ fn text_of_trailing(str : Bytes) -> Array[Element] {
 /// A cursor over the input.
 priv struct Parser {
   input : Bytes
-  mut pos : Int
+  mut pos : Int32
   out : Array[Element]
 }
 
@@ -251,7 +266,7 @@ fn Parser::other_escape(self : Parser, escaped : Byte) -> Unit {
 /// form. Malformed sequences are captured as `Unknown`; the result can always be
 /// converted back to a semantically equivalent string via `to_bytes`.
 pub fn parse(input : Bytes) -> AnsiText {
-  let parser = Parser::{ input, pos: 0, out: [] }
+  let parser = Parser::{ input, pos: 0, out: [], }
   while parser.peek() is Some(c) {
     if c == ESC {
       parser.pos += 1

@@ -1,11 +1,11 @@
 ///|
 /// `width`, for functions with a label of the same name.
-fn total_width(t : ArrayView[Element]) -> Int {
+fn total_width(t : ArrayView[Element]) -> Int32 {
   width(t)
 }
 
 ///|
-fn repeated(char : Byte, n : Int) -> Text {
+fn repeated(char : Byte, n : Int32) -> Text {
   Text::of_bytes(if n <= 0 { b"" } else { Bytes::make(n, char) })
 }
 
@@ -13,9 +13,9 @@ fn repeated(char : Byte, n : Int) -> Text {
 /// Pad `t` on the right to `width` columns.
 pub fn pad(
   t : ArrayView[Element],
-  char? : Byte = b' ',
-  style? : ArrayView[Attr] = [],
-  width~ : Int,
+  char~ : Byte = b' ',
+  style~ : ArrayView[Attr] = [],
+  width~ : Int32,
 ) -> AnsiText {
   let pad_text = repeated(char, width - total_width(t))
   let out = t.to_owned()
@@ -33,9 +33,9 @@ pub fn pad(
 /// Pad `t` on both sides to `width` columns.
 pub fn center(
   t : ArrayView[Element],
-  char? : Byte = b' ',
-  style? : ArrayView[Attr] = [],
-  width~ : Int,
+  char~ : Byte = b' ',
+  style~ : ArrayView[Attr] = [],
+  width~ : Int32,
 ) -> AnsiText {
   let pad_len = @cmp.maximum(0, width - total_width(t))
   let left_pad = Element::Text(repeated(char, pad_len / 2))
@@ -61,13 +61,13 @@ pub fn center(
 
 ///|
 /// The first `width` columns of `t`.
-pub fn truncate(t : ArrayView[Element], width~ : Int) -> AnsiText {
+pub fn truncate(t : ArrayView[Element], width~ : Int32) -> AnsiText {
   split(t, pos=width).0
 }
 
 ///|
 /// Split `t` into lines of at most `width` columns.
-pub fn wrap(t : ArrayView[Element], width~ : Int) -> Array[AnsiText] {
+pub fn wrap(t : ArrayView[Element], width~ : Int32) -> Array[AnsiText] {
   let lines = []
   let mut rest = t.to_owned()
   while !is_empty(rest) {
@@ -105,7 +105,7 @@ pub fn strip(str : Bytes) -> Bytes {
 ///|
 /// Lay out two texts in columns of `width`, wrapping each as necessary.
 pub fn to_double_column(
-  width~ : Int,
+  width~ : Int32,
   left~ : Bytes,
   right~ : Bytes,
 ) -> Array[(Bytes, Bytes)] {
@@ -117,5 +117,7 @@ pub fn to_double_column(
   while right.length() < left.length() {
     right.push(b"")
   }
-  [ for i in 0..<left.length() => (left[i], right[i]) ]
+  [
+    for i in 0..<left.length() => (left[i], right[i])
+  ]
 }

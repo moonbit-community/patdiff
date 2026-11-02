@@ -5,61 +5,67 @@ pub(all) suberror SysError {
 }
 
 ///|
-pub impl Show for SysError with output(self, logger) {
+pub impl Show for SysError with fn output(self, logger) {
   let SysError(msg) = self
   logger.write_string(msg)
 }
 
 ///|
 #borrow(path, err)
-extern "C" fn patdiff_read_file(path : Bytes, err : FixedArray[Int]) -> Bytes = "patdiff_read_file"
+extern "C" fn patdiff_read_file(path : Bytes, err : FixedArray[Int32]) -> Bytes = "patdiff_read_file"
 
 ///|
 #borrow(err)
-extern "C" fn patdiff_read_stdin(err : FixedArray[Int]) -> Bytes = "patdiff_read_stdin"
+extern "C" fn patdiff_read_stdin(err : FixedArray[Int32]) -> Bytes = "patdiff_read_stdin"
 
 ///|
 #borrow(data)
-extern "C" fn patdiff_write_fd(fd : Int, data : Bytes) -> Int = "patdiff_write_fd"
+extern "C" fn patdiff_write_fd(fd : Int32, data : Bytes) -> Int32 = "patdiff_write_fd"
 
 ///|
 #borrow(path, data)
-extern "C" fn patdiff_write_file(path : Bytes, data : Bytes) -> Int = "patdiff_write_file"
+extern "C" fn patdiff_write_file(path : Bytes, data : Bytes) -> Int32 = "patdiff_write_file"
 
 ///|
 #borrow(path, mtime)
-extern "C" fn patdiff_stat(path : Bytes, mtime : FixedArray[Double]) -> Int = "patdiff_stat"
+extern "C" fn patdiff_stat(path : Bytes, mtime : FixedArray[Double]) -> Int32 = "patdiff_stat"
 
 ///|
 #borrow(path, err)
-extern "C" fn patdiff_read_dir(path : Bytes, err : FixedArray[Int]) -> Bytes = "patdiff_read_dir"
+extern "C" fn patdiff_read_dir(path : Bytes, err : FixedArray[Int32]) -> Bytes = "patdiff_read_dir"
 
 ///|
-extern "C" fn patdiff_console_width() -> Int = "patdiff_console_width"
+extern "C" fn patdiff_console_width() -> Int32 = "patdiff_console_width"
 
 ///|
 #borrow(template, data)
-extern "C" fn patdiff_temp_file(template : FixedArray[Byte], suffix_len : Int, data : Bytes) -> Int = "patdiff_temp_file"
+extern "C" fn patdiff_temp_file(
+  template : FixedArray[Byte],
+  suffix_len : Int32,
+  data : Bytes,
+) -> Int32 = "patdiff_temp_file"
 
 ///|
 #borrow(path)
 extern "C" fn patdiff_unlink(path : Bytes) -> Unit = "patdiff_unlink"
 
 ///|
-extern "C" fn patdiff_exit(code : Int) -> Unit = "patdiff_exit"
+extern "C" fn patdiff_exit(code : Int32) -> Unit = "patdiff_exit"
 
 ///|
-extern "C" fn patdiff_strerror(code : Int) -> Bytes = "patdiff_strerror"
+extern "C" fn patdiff_strerror(code : Int32) -> Bytes = "patdiff_strerror"
 
 ///|
-fn sys_error(path : Bytes, code : Int) -> SysError {
-  SysError("\{@bstr.to_string(path)}: \{@bstr.to_string(patdiff_strerror(code))}")
+fn sys_error(path : Bytes, code : Int32) -> SysError {
+  SysError(
+    "\{@bstr.to_string(path)}: \{@bstr.to_string(patdiff_strerror(code))}",
+  )
 }
 
 ///|
 /// The contents of a file. Works on anything readable, such as a pipe.
 pub fn read_file(path : Bytes) -> Bytes raise SysError {
-  let err : FixedArray[Int] = [0]
+  let err : FixedArray[Int32] = [0]
   let contents = patdiff_read_file(path, err)
   if err[0] != 0 {
     raise sys_error(path, err[0])
@@ -69,7 +75,7 @@ pub fn read_file(path : Bytes) -> Bytes raise SysError {
 
 ///|
 pub fn read_stdin() -> Bytes raise SysError {
-  let err : FixedArray[Int] = [0]
+  let err : FixedArray[Int32] = [0]
   let contents = patdiff_read_stdin(err)
   if err[0] != 0 {
     raise sys_error(b"<stdin>", err[0])
@@ -110,7 +116,7 @@ pub fn print_stderr(data : Bytes) -> Unit {
 
 ///|
 /// Flushes stdout and ends the process.
-pub fn exit(code : Int) -> Unit {
+pub fn exit(code : Int32) -> Unit {
   flush_stdout()
   patdiff_exit(code)
 }
@@ -139,16 +145,16 @@ pub fn stat(path : Bytes) -> Stat? raise SysError {
   }
   match code {
     0 => None
-    1 => Some({ kind: Regular, mtime: mtime[0] })
-    2 => Some({ kind: Directory, mtime: mtime[0] })
-    _ => Some({ kind: OtherKind, mtime: mtime[0] })
+    1 => Some({ kind: Regular, mtime: mtime[0], })
+    2 => Some({ kind: Directory, mtime: mtime[0], })
+    _ => Some({ kind: OtherKind, mtime: mtime[0], })
   }
 }
 
 ///|
 /// The entries of a directory, except `.` and `..`.
 pub fn read_dir(path : Bytes) -> Array[Bytes] raise SysError {
-  let err : FixedArray[Int] = [0]
+  let err : FixedArray[Int32] = [0]
   let listing = patdiff_read_dir(path, err)
   if err[0] != 0 {
     raise sys_error(path, err[0])
@@ -161,7 +167,7 @@ pub fn read_dir(path : Bytes) -> Array[Bytes] raise SysError {
 
 ///|
 /// The width of the terminal, when there is one.
-pub fn console_width() -> Int? {
+pub fn console_width() -> Int32? {
   let width = patdiff_console_width()
   if width < 0 {
     None

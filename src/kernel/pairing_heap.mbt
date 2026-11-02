@@ -10,14 +10,14 @@ priv struct HeapNode[A] {
 
 ///|
 priv struct PairingHeap[A] {
-  cmp : (A, A) -> Int
+  cmp : (A, A) -> Int32
   mut root : HeapNode[A]?
-  mut length : Int
+  mut length : Int32
 }
 
 ///|
-fn[A] PairingHeap::new(cmp : (A, A) -> Int) -> PairingHeap[A] {
-  { cmp, root: None, length: 0 }
+fn[A] PairingHeap::new(cmp : (A, A) -> Int32) -> PairingHeap[A] {
+  { cmp, root: None, length: 0, }
 }
 
 ///|
@@ -46,7 +46,10 @@ fn[A] PairingHeap::merge(
 
 ///|
 fn[A] PairingHeap::add(self : PairingHeap[A], value : A) -> Unit {
-  self.root = self.merge(self.root, Some({ value, child: None, sibling: None }))
+  self.root = self.merge(
+    self.root,
+    Some({ value, child: None, sibling: None, }),
+  )
   self.length += 1
 }
 
@@ -63,7 +66,7 @@ fn[A] disconnect_sibling(node : HeapNode[A]) -> HeapNode[A]? {
 /// this order matters.
 fn[A] PairingHeap::merge_pairs(
   self : PairingHeap[A],
-  depth : Int,
+  depth : Int32,
   head : HeapNode[A]?,
 ) -> HeapNode[A]? {
   if depth >= 1000 {
@@ -99,7 +102,8 @@ fn[A] PairingHeap::allocating_merge_pairs(
   }
   match pairs.pop() {
     None => None
-    Some(last) => pairs.rev_fold(init=last, (acc, heap) => self.merge(acc, heap))
+    Some(last) =>
+      pairs.rev_fold(init=last, (acc, heap) => self.merge(acc, heap))
   }
 }
 

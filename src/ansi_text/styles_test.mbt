@@ -1,7 +1,9 @@
 ///|
 /// Port of `ansi_text/test/test_styles.ml`.
 fn test_delta(old_style : Array[Attr], added_style : Array[Attr]) -> String {
-  @ansi_text.style_to_string_hum(@ansi_text.style_delta(old_style~, added_style~))
+  @ansi_text.style_to_string_hum(
+    @ansi_text.style_delta(old_style~, added_style~),
+  )
 }
 
 ///|
@@ -45,10 +47,12 @@ test "both styles have resets" {
 ///|
 test "reset in the second style" {
   @test.assert_eq(
-    test_delta(
-      [Bold, Underline, Fg(Standard(Red)), Bg(Standard(Green))],
-      [Blink, Reset, Italic, Underline],
-    ),
+    test_delta([Bold, Underline, Fg(Standard(Red)), Bg(Standard(Green))], [
+      Blink,
+      Reset,
+      Italic,
+      Underline,
+    ]),
     "(off +italic +uline)",
   )
 }
@@ -56,10 +60,11 @@ test "reset in the second style" {
 ///|
 test "reset in the first style" {
   @test.assert_eq(
-    test_delta(
-      [Bold, Underline, Reset, Italic, Fg(Standard(Red))],
-      [Blink, Italic, Underline],
-    ),
+    test_delta([Bold, Underline, Reset, Italic, Fg(Standard(Red))], [
+      Blink,
+      Italic,
+      Underline,
+    ]),
     "(+blink +uline)",
   )
 }
@@ -67,10 +72,12 @@ test "reset in the first style" {
 ///|
 test "no resets" {
   @test.assert_eq(
-    test_delta(
-      [Bold, Underline, Italic, Fg(Standard(Red))],
-      [Blink, Italic, Underline, Bg(Default)],
-    ),
+    test_delta([Bold, Underline, Italic, Fg(Standard(Red))], [
+      Blink,
+      Italic,
+      Underline,
+      Bg(Default),
+    ]),
     "(+blink bg:default)",
   )
 }

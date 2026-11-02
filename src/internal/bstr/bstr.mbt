@@ -22,18 +22,18 @@ pub fn to_string(b : BytesView) -> String {
 }
 
 ///|
-pub fn of_int(n : Int) -> Bytes {
+pub fn of_int(n : Int32) -> Bytes {
   of_string(n.to_string())
 }
 
 ///|
 /// An owned copy of `s[start:end]`.
-pub fn sub(s : Bytes, start : Int, end : Int) -> Bytes {
+pub fn sub(s : Bytes, start : Int32, end : Int32) -> Bytes {
   s[start:end].to_owned()
 }
 
 ///|
-pub fn concat(parts : ArrayView[Bytes], sep? : Bytes = b"") -> Bytes {
+pub fn concat(parts : ArrayView[Bytes], sep~ : Bytes = b"") -> Bytes {
   let size = parts.fold(init=0, (acc, p) => acc + p.length() + sep.length())
   let buf = Buffer(size_hint=size)
   for i, part in parts {
@@ -132,7 +132,7 @@ pub fn lsplit2(s : Bytes, sep : Byte) -> (Bytes, Bytes)? {
 }
 
 ///|
-pub fn is_substring_at(s : Bytes, pos : Int, substring : Bytes) -> Bool {
+pub fn is_substring_at(s : Bytes, pos : Int32, substring : Bytes) -> Bool {
   let n = substring.length()
   if pos + n > s.length() {
     return false
@@ -151,7 +151,7 @@ pub fn contains(s : Bytes, substring : Bytes) -> Bool {
 }
 
 ///|
-pub fn spaces(n : Int) -> Bytes {
+pub fn spaces(n : Int32) -> Bytes {
   if n <= 0 {
     b""
   } else {
@@ -160,7 +160,7 @@ pub fn spaces(n : Int) -> Bytes {
 }
 
 ///|
-pub fn pad_left(s : Bytes, len : Int) -> Bytes {
+pub fn pad_left(s : Bytes, len : Int32) -> Bytes {
   if s.length() >= len {
     s
   } else {
@@ -170,8 +170,13 @@ pub fn pad_left(s : Bytes, len : Int) -> Bytes {
 
 ///|
 /// A stable sort, matching OCaml's `List.sort`, which returns a new array.
-pub fn[T] stable_sorted_by(xs : ArrayView[T], cmp : (T, T) -> Int) -> Array[T] {
+pub fn[T] stable_sorted_by(
+  xs : ArrayView[T],
+  cmp : (T, T) -> Int32,
+) -> Array[T] {
   let fixed = FixedArray::from_iter(xs.iter())
   fixed.stable_sort_by(cmp)
-  [ for x in fixed => x ]
+  [
+    for x in fixed => x
+  ]
 }

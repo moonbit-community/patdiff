@@ -26,7 +26,7 @@ fn ft_float(x : Double) -> @sexp.Sexp {
 ///|
 fn ft_with_floats(t : StringWithFloats) -> @sexp.Sexp {
   ft_list([
-    ft_list([ft_atom("floats"), ft_list([for f in t.floats => ft_float(f)])]),
+    ft_list([ft_atom("floats"), ft_list([ for f in t.floats => ft_float(f) ])]),
     ft_list([ft_atom("without_floats"), ft_bytes(t.without_floats)]),
   ])
 }
@@ -68,8 +68,7 @@ test "String_with_floats: scientific notation" {
   ]
   let actual = ft_list(
     [
-      for i, t in ts =>
-        ft_list([ft_atom("t\{i + 1}"), ft_with_floats(t)])
+      for i, t in ts => ft_list([ft_atom("t\{i + 1}"), ft_with_floats(t)])
     ],
   )
   let expected =
@@ -130,22 +129,27 @@ test "String_with_floats: times" {
 
 ///|
 fn[A] ft_range(r : @pd.Range[A], f : (A) -> @sexp.Sexp) -> @sexp.Sexp {
-  let arr = (xs : Array[A]) => ft_list([for x in xs => f(x)])
-  let kind = (k : @pd.MoveKind?) => match k {
-    None => ft_list([])
-    Some(Move(id)) => ft_list([ft_list([ft_atom("Move"), ft_atom(id.to_string())])])
-    Some(WithinMove(id)) =>
-      ft_list([ft_list([ft_atom("Within_move"), ft_atom(id.to_string())])])
+  let arr = (xs : Array[A]) => ft_list([ for x in xs => f(x) ])
+  let kind = (k : @pd.MoveKind?) => {
+    match k {
+      None => ft_list([])
+      Some(Move(id)) =>
+        ft_list([ft_list([ft_atom("Move"), ft_atom(id.to_string())])])
+      Some(WithinMove(id)) =>
+        ft_list([ft_list([ft_atom("Within_move"), ft_atom(id.to_string())])])
+    }
   }
-  let id_opt = (id : Int?) => match id {
-    None => ft_list([])
-    Some(id) => ft_list([ft_atom(id.to_string())])
+  let id_opt = (id : Int32?) => {
+    match id {
+      None => ft_list([])
+      Some(id) => ft_list([ft_atom(id.to_string())])
+    }
   }
   match r {
     Same(pairs) =>
       ft_list([
         ft_atom("Same"),
-        ft_list([for p in pairs => ft_list([f(p.0), f(p.1)])]),
+        ft_list([ for p in pairs => ft_list([f(p.0), f(p.1)]) ]),
       ])
     Prev(xs, k) => ft_list([ft_atom("Prev"), arr(xs), kind(k)])
     Next(xs, k) => ft_list([ft_atom("Next"), arr(xs), kind(k)])
@@ -161,12 +165,14 @@ test "recover_ranges" {
   let next = [b"z"]
   let a = needleman_wunsch(prev, next, (x, y) => x == y)
   let actual = ft_list(
-    [for row in a => ft_list([for n in row => ft_atom(n.to_string())])],
+    [
+      for row in a => ft_list([ for n in row => ft_atom(n.to_string()) ])
+    ],
   )
   ft_expect(actual, "((0 1) (1 1) (2 2))")
   let ranges = recover_ranges(prev, next, a)
   ft_expect(
-    ft_list([for r in ranges => ft_range(r, ft_bytes)]),
+    ft_list([ for r in ranges => ft_range(r, ft_bytes) ]),
     "((Replace (a b) (z) ()))",
   )
 }
@@ -182,12 +188,15 @@ fn ft_position(p : RangePosition) -> @sexp.Sexp {
 
 ///|
 test "Merged_with_position" {
-  let test_ = (ranges : Array[@pd.Range[Bytes]]) => ft_list(
-    [
-      for item in merged_with_position(ranges) =>
-        ft_list([ft_range(item.0, ft_bytes), ft_position(item.1)])
-    ],
-  )
+  let test_ = (ranges : Array[@pd.Range[Bytes]]) => {
+    ft_list(
+      [
+        for item in merged_with_position(ranges) => {
+          ft_list([ft_range(item.0, ft_bytes), ft_position(item.1)])
+        }
+      ],
+    )
+  }
   let same : @pd.Range[Bytes] = Same([(b"same", b"same")])
   let not_same : @pd.Range[Bytes] = Next([b"new"], None)
   ft_expect(test_([same, same]), "()")
@@ -195,10 +204,7 @@ test "Merged_with_position" {
     #|(((Same ((same same))) Start) ((Next (new) ()) Middle)
     #| ((Same ((same same) (same same))) Middle) ((Next (new) ()) Middle)
     #| ((Same ((same same) (same same))) End))
-  ft_expect(
-    test_([same, not_same, same, same, not_same, same, same]),
-    expected,
-  )
+  ft_expect(test_([same, not_same, same, same, not_same, same, same]), expected)
 }
 
 // Upstream's `Drop_or_keep` and `Reconstruct_hunk` tests exercise helpers that
@@ -216,23 +222,23 @@ test "enforce_context_limit (Drop_or_keep and Reconstruct_hunk tests)" {
   let test_ = (ranges : Array[@pd.Range[Bytes]]) => {
     let prev_size = ranges.fold(init=0, (n, r) => n + r.prev_size())
     let next_size = ranges.fold(init=0, (n, r) => n + r.next_size())
-    let hunks = enforce_context_limit(
-      context=1,
-      @pd.Hunk::{
-        prev_start: 1,
-        prev_size,
-        next_start: 1,
-        next_size,
-        ranges,
-      },
-    )
+    let hunks = enforce_context_limit(context=1, @pd.Hunk::{
+      prev_start: 1,
+      prev_size,
+      next_start: 1,
+      next_size,
+      ranges,
+    })
     ft_list(
       [
-        for h in hunks =>
+        for h in hunks => {
           ft_list([
-            ft_atom("\{h.prev_start} \{h.prev_size} \{h.next_start} \{h.next_size}"),
-            ft_list([for r in h.ranges => ft_range(r, ft_bytes)]),
+            ft_atom(
+              "\{h.prev_start} \{h.prev_size} \{h.next_start} \{h.next_size}",
+            ),
+            ft_list([ for r in h.ranges => ft_range(r, ft_bytes) ]),
           ])
+        }
       ],
     )
   }

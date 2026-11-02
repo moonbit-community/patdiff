@@ -18,7 +18,7 @@ fn sx_list(xs : Array[@sexp.Sexp]) -> @sexp.Sexp {
 }
 
 ///|
-fn sx_int(n : Int) -> @sexp.Sexp {
+fn sx_int(n : Int32) -> @sexp.Sexp {
   sx_atom(n.to_string())
 }
 
@@ -41,29 +41,18 @@ fn sx_move_kind(m : @pd.MoveKind) -> @sexp.Sexp {
 
 ///|
 fn[A] sx_array(xs : ArrayView[A], f : (A) -> @sexp.Sexp) -> @sexp.Sexp {
-  sx_list([for x in xs => f(x)])
+  sx_list([ for x in xs => f(x) ])
 }
 
 ///|
 fn[A] sx_range(r : @pd.Range[A], f : (A) -> @sexp.Sexp) -> @sexp.Sexp {
   match r {
     Same(pairs) =>
-      sx_list([
-        sx_atom("Same"),
-        sx_array(pairs, p => sx_list([f(p.0), f(p.1)])),
-      ])
+      sx_list([sx_atom("Same"), sx_array(pairs, p => sx_list([f(p.0), f(p.1)]))])
     Prev(xs, mk) =>
-      sx_list([
-        sx_atom("Prev"),
-        sx_array(xs, f),
-        sx_option(mk, sx_move_kind),
-      ])
+      sx_list([sx_atom("Prev"), sx_array(xs, f), sx_option(mk, sx_move_kind)])
     Next(xs, mk) =>
-      sx_list([
-        sx_atom("Next"),
-        sx_array(xs, f),
-        sx_option(mk, sx_move_kind),
-      ])
+      sx_list([sx_atom("Next"), sx_array(xs, f), sx_option(mk, sx_move_kind)])
     Replace(xs, ys, id) =>
       sx_list([
         sx_atom("Replace"),
@@ -120,7 +109,7 @@ fn sx_expect(actual : @sexp.Sexp, expected : String) -> Unit raise {
 
 ///|
 fn rs_test(
-  mark_newline_changes? : Bool = false,
+  mark_newline_changes~ : Bool = false,
   produce_unified_lines~ : Bool,
   prev~ : String,
   next~ : String,

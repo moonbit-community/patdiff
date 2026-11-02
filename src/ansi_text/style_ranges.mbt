@@ -1,8 +1,8 @@
 ///|
 /// A style applied between two display columns.
 pub(all) struct StyleRange {
-  start : Int
-  end : Int
+  start : Int32
+  end : Int32
   style : Array[Attr]
 } derive(Debug, Eq)
 
@@ -12,7 +12,7 @@ fn attr_key(attr : Attr) -> String {
 }
 
 ///|
-fn StyleRange::compare(self : StyleRange, other : StyleRange) -> Int {
+fn StyleRange::compare(self : StyleRange, other : StyleRange) -> Int32 {
   let by_start = self.start.compare(other.start)
   if by_start != 0 {
     return by_start
@@ -33,7 +33,7 @@ pub fn style_ranges_identify(
   t : ArrayView[Element],
 ) -> (Array[StyleRange], Array[Element]) {
   // Most recently opened first.
-  let open_ranges : Array[(Int, Array[Attr])] = []
+  let open_ranges : Array[(Int32, Array[Attr])] = []
   let closed_ranges = []
   let other_ansi = []
   let mut position = 0
@@ -52,7 +52,11 @@ pub fn style_ranges_identify(
           None => open_ranges.insert(0, (position, new_style))
           Some(i) => {
             let (start, old_style) = open_ranges.remove(i)
-            closed_ranges.push(StyleRange::{ start, end: position, style: old_style })
+            closed_ranges.push(StyleRange::{
+              start,
+              end: position,
+              style: old_style,
+            })
           }
         }
       }
@@ -69,7 +73,10 @@ pub fn style_ranges_identify(
 
 ///|
 /// Insert the styles of `ranges` into `text`.
-pub fn style_ranges_apply(text~ : Text, ranges : ArrayView[StyleRange]) -> AnsiText {
+pub fn style_ranges_apply(
+  text~ : Text,
+  ranges : ArrayView[StyleRange],
+) -> AnsiText {
   let styles = [ for r in ranges => (r.start, r.style) ]
   styles.push_iter(ranges.iter().map(r => (r.end, style_turn_off(r.style))))
   let styles = @bstr.stable_sorted_by(styles, (a, b) => a.0.compare(b.0))
@@ -94,18 +101,20 @@ pub fn style_ranges_apply(text~ : Text, ranges : ArrayView[StyleRange]) -> AnsiT
 /// Shift the starts and ends of `ranges`.
 pub fn style_ranges_adjust_by(
   ranges : ArrayView[StyleRange],
-  start? : Int = 0,
-  end? : Int = 0,
+  start~ : Int32 = 0,
+  end~ : Int32 = 0,
 ) -> Array[StyleRange] {
-  [ for r in ranges => { ..r, start: r.start + start, end: r.end + end } ]
+  [
+    for r in ranges => { ..r, start: r.start + start, end: r.end + end, }
+  ]
 }
 
 ///|
 /// Remove the styles between `start` and `end`.
 pub fn style_ranges_exclude(
   ranges : ArrayView[StyleRange],
-  start~ : Int,
-  end~ : Int,
+  start~ : Int32,
+  end~ : Int32,
 ) -> Array[StyleRange] {
   let out = []
   for r in ranges {
@@ -113,12 +122,12 @@ pub fn style_ranges_exclude(
     if start <= s && e <= end {
       continue
     } else if s <= start && end <= e {
-      out.push({ ..r, end: start })
-      out.push({ ..r, start: end })
+      out.push({ ..r, end: start, })
+      out.push({ ..r, start: end, })
     } else if s <= start && start <= e {
-      out.push({ ..r, end: start })
+      out.push({ ..r, end: start, })
     } else if s <= end && end <= e {
-      out.push({ ..r, start: end })
+      out.push({ ..r, start: end, })
     } else {
       out.push(r)
     }
@@ -130,7 +139,7 @@ pub fn style_ranges_exclude(
 /// Divide `ranges` at `pos`; the second part is relative to `pos`.
 pub fn style_ranges_split(
   ranges : ArrayView[StyleRange],
-  pos~ : Int,
+  pos~ : Int32,
 ) -> (Array[StyleRange], Array[StyleRange]) {
   let before = []
   let after_part = []
@@ -140,15 +149,15 @@ pub fn style_ranges_split(
       before.push(r)
     }
     if r.start >= pos {
-      after_part.push({ ..r, start: r.start - pos, end: r.end - pos })
+      after_part.push({ ..r, start: r.start - pos, end: r.end - pos, })
     }
     if r.start < pos && r.end > pos {
       across.push(r)
     }
   }
-  let after = [ for r in across => { ..r, start: 0, end: r.end - pos } ]
+  let after = [ for r in across => { ..r, start: 0, end: r.end - pos, } ]
   after.push_iter(after_part.iter())
-  before.push_iter(across.iter().map(r => { ..r, end: pos }))
+  before.push_iter(across.iter().map(r => { ..r, end: pos, }))
   (before, after)
 }
 
@@ -161,7 +170,7 @@ pub(all) struct TextWithStyleRanges {
 } derive(Debug, Eq)
 
 ///|
-pub fn TextWithStyleRanges::width(self : TextWithStyleRanges) -> Int {
+pub fn TextWithStyleRanges::width(self : TextWithStyleRanges) -> Int32 {
   self.text.width
 }
 
@@ -174,13 +183,19 @@ pub fn TextWithStyleRanges::is_empty(self : TextWithStyleRanges) -> Bool {
 pub fn TextWithStyleRanges::to_text_with_ansi(
   self : TextWithStyleRanges,
 ) -> AnsiText {
-  let by_pos = (a : (Int, Array[Attr]), b : (Int, Array[Attr])) => a.0.compare(b.0)
+  let by_pos = (a : (Int32, Array[Attr]), b : (Int32, Array[Attr])) => {
+    a.0.compare(b.0)
+  }
   let start_styles = @bstr.stable_sorted_by(
-    [ for r in self.ranges => (r.start, r.style) ],
+    [
+      for r in self.ranges => (r.start, r.style)
+    ],
     by_pos,
   )
   let end_styles = @bstr.stable_sorted_by(
-    [ for r in self.ranges => (r.end, style_turn_off(r.style)) ],
+    [
+      for r in self.ranges => (r.end, style_turn_off(r.style))
+    ],
     by_pos,
   )
   // A stable merge, preferring ends over starts at the same position.
@@ -228,7 +243,7 @@ pub fn TextWithStyleRanges::of_text_with_ansi(
       texts.push(txt)
     }
   }
-  Some({ text: Text::concat(texts), ranges })
+  Some({ text: Text::concat(texts), ranges, })
 }
 
 ///|
@@ -249,21 +264,21 @@ pub fn TextWithStyleRanges::to_unstyled(self : TextWithStyleRanges) -> Bytes {
 ///|
 pub fn TextWithStyleRanges::unstyle_between(
   self : TextWithStyleRanges,
-  start~ : Int,
-  end~ : Int,
+  start~ : Int32,
+  end~ : Int32,
 ) -> TextWithStyleRanges {
-  { text: self.text, ranges: style_ranges_exclude(self.ranges, start~, end~) }
+  { text: self.text, ranges: style_ranges_exclude(self.ranges, start~, end~), }
 }
 
 ///|
 pub fn TextWithStyleRanges::split(
   self : TextWithStyleRanges,
-  pos~ : Int,
+  pos~ : Int32,
 ) -> (TextWithStyleRanges, TextWithStyleRanges) {
   let (text_before, text_after) = self.text.split(pos~)
   let (ranges_before, ranges_after) = style_ranges_split(self.ranges, pos~)
   (
-    { text: text_before, ranges: ranges_before },
-    { text: text_after, ranges: ranges_after },
+    { text: text_before, ranges: ranges_before, },
+    { text: text_after, ranges: ranges_after, },
   )
 }

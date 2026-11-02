@@ -155,22 +155,23 @@ pub fn compare_lines(
 /// Compares two in-memory inputs, giving `None` when there's no difference and
 /// otherwise the rendered diff.
 pub fn diff_strings(
-  print_global_header? : Bool = false,
-  platform? : Platform = Platform::without_unix(),
+  print_global_header~ : Bool = false,
+  platform~ : Platform = Platform::without_unix(),
   config : Configuration,
   prev~ : DiffInput,
   next~ : DiffInput,
 ) -> Bytes? {
-  let result = ComparisonResult::new(
+  let result = ComparisonResult::new(config, prev~, next~, compare_assuming_text=(
     config,
-    prev~,
-    next~,
-    compare_assuming_text=(config, prev, next) => compare_lines(
+    prev,
+    next,
+  ) => {
+    compare_lines(
       config,
       prev=@bstr.split_lines(prev.text),
       next=@bstr.split_lines(next.text),
-    ),
-  )
+    )
+  })
   if result.has_no_diff() {
     return None
   }

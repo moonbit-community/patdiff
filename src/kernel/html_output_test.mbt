@@ -6,7 +6,9 @@ fn html_trim_blank_lines(s : String) -> String {
   for line in s.split("\n") {
     lines.push(@bstr.to_string(@bstr.rstrip(b(line.to_owned()))))
   }
-  let is_blank = (line : String) => line.iter().all(c => c == ' ' || c == '\t' || c == '\r')
+  let is_blank = (line : String) => {
+    line.iter().all(c => c == ' ' || c == '\t' || c == '\r')
+  }
   let mut lo = 0
   let mut hi = lines.length()
   while lo < hi && is_blank(lines[lo]) {

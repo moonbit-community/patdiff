@@ -34,7 +34,7 @@ external diff.
 
 ## Library
 
-The `kernel` package is pure MoonBit, so it runs on every backend:
+The `kernel` package is pure MoonBit, so it isn't tied to the native backend:
 
 ```moonbit nocheck
 let diff : Bytes = @kernel.patdiff(
@@ -56,7 +56,7 @@ let diff : Bytes = @kernel.patdiff(
 
 All text is `Bytes`, because file contents needn't be valid UTF-8, and OCaml's
 `string` is a byte sequence too. `DiffInput::of_string` encodes a `String` as UTF-8,
-and `@bstr.to_string` in `internal/bstr` decodes the result.
+and `@utf8.decode_lossy` from `moonbitlang/core/encoding/utf8` decodes the result.
 
 ## Differences from upstream
 
@@ -85,5 +85,5 @@ moon test
 moon build --release && python3 test/cli/run_cram.py
 ```
 
-`moon test` runs upstream's expect tests, ported to MoonBit. `test/cli` holds
-upstream's command line tests as cram files.
+`moon test` runs upstream's expect tests, ported to MoonBit, on any backend. `test/cli`
+holds upstream's command line tests as cram files; they need `bash` and `git`.

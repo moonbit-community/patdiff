@@ -17,7 +17,7 @@ pub type AnsiText = Array[Element]
 
 ///|
 /// The width of the text in a terminal, ignoring ANSI codes.
-pub fn width(t : ArrayView[Element]) -> Int {
+pub fn width(t : ArrayView[Element]) -> Int32 {
   let mut total = 0
   for element in t {
     if element is Text(txt) {
@@ -93,7 +93,9 @@ pub fn to_unstyled(t : ArrayView[Element]) -> Bytes {
 ///|
 /// Replace each element for which `f` gives `Some`.
 pub fn map(t : ArrayView[Element], f : (Element) -> Element?) -> AnsiText {
-  [ for e in t => f(e).unwrap_or(e) ]
+  [
+    for e in t => f(e).unwrap_or(e)
+  ]
 }
 
 ///|
@@ -161,8 +163,8 @@ pub fn style_at_end(t : ArrayView[Element]) -> Style {
 ///|
 /// Splits at display column `pos`. Any active style is turned off at the end of
 /// the first part and back on at the start of the second.
-pub fn split(t : ArrayView[Element], pos~ : Int) -> (AnsiText, AnsiText) {
-  let mut found : (Int, Int)? = None
+pub fn split(t : ArrayView[Element], pos~ : Int32) -> (AnsiText, AnsiText) {
+  let mut found : (Int32, Int32)? = None
   let mut len = 0
   for idx, element in t {
     if element is Text(txt) {

@@ -1,7 +1,7 @@
 ///|
 /// Mirrors upstream's `recording_gutter`: renders a one-letter side tag followed
 /// by the line number(s) (`prev/next` when they differ).
-fn gutter_recording(width~ : Int) -> @kernel.AnnotationGutter {
+fn gutter_recording(width~ : Int32) -> @kernel.AnnotationGutter {
   let render = (side : @kernel.GutterSide) => {
     let (tag, body) = match side {
       Prev(line~) => ("P", line.to_string())
@@ -90,12 +90,13 @@ test "build_unified threads side+line through annotation_gutter" {
     next~,
   )
   let lines = []
-  for hunk_lines in @kernel.build_unified(
-    annotation_gutter=gutter_recording(width=4),
-    rules=gutter_strip_rules(),
-    output=Ascii,
-    hunks,
-  ) {
+  for
+    hunk_lines in @kernel.build_unified(
+      annotation_gutter=gutter_recording(width=4),
+      rules=gutter_strip_rules(),
+      output=Ascii,
+      hunks,
+    ) {
     for line in hunk_lines {
       lines.push(@bstr.to_string(line))
     }
@@ -127,12 +128,13 @@ test "build_unified emits `Same for context lines and `Prev/`Next for changes" {
     next~,
   )
   let lines = []
-  for hunk_lines in @kernel.build_unified(
-    annotation_gutter=gutter_recording(width=3),
-    rules=gutter_strip_rules(),
-    output=Ascii,
-    hunks,
-  ) {
+  for
+    hunk_lines in @kernel.build_unified(
+      annotation_gutter=gutter_recording(width=3),
+      rules=gutter_strip_rules(),
+      output=Ascii,
+      hunks,
+    ) {
     for line in hunk_lines {
       lines.push(@bstr.to_string(line))
     }
@@ -163,12 +165,13 @@ test "build_unified across multiple hunks emits each hunk's lines independently"
     next~,
   )
   let lines = []
-  for i, hunk_lines in @kernel.build_unified(
-    annotation_gutter=gutter_recording(width=3),
-    rules=gutter_strip_rules(),
-    output=Ascii,
-    hunks,
-  ) {
+  for
+    i, hunk_lines in @kernel.build_unified(
+      annotation_gutter=gutter_recording(width=3),
+      rules=gutter_strip_rules(),
+      output=Ascii,
+      hunks,
+    ) {
     if i > 0 {
       lines.push("---")
     }
@@ -214,12 +217,13 @@ test "build_unified Unified range (produce_unified_lines:true) emits with side:U
     ),
   )
   let lines = []
-  for hunk_lines in @kernel.build_unified(
-    annotation_gutter=gutter_recording(width=3),
-    rules=@kernel.Rules::default(),
-    output=Ansi,
-    hunks,
-  ) {
+  for
+    hunk_lines in @kernel.build_unified(
+      annotation_gutter=gutter_recording(width=3),
+      rules=@kernel.Rules::default(),
+      output=Ansi,
+      hunks,
+    ) {
     for line in hunk_lines {
       // Strip ANSI escapes so the snapshot is readable.
       lines.push(@bstr.to_string(@ansi_text.strip(line)))
@@ -252,12 +256,13 @@ test "build_unified Unified line carries diverged prev/next line numbers" {
     ),
   )
   let lines = []
-  for hunk_lines in @kernel.build_unified(
-    annotation_gutter=gutter_recording(width=4),
-    rules=@kernel.Rules::default(),
-    output=Ansi,
-    hunks,
-  ) {
+  for
+    hunk_lines in @kernel.build_unified(
+      annotation_gutter=gutter_recording(width=4),
+      rules=@kernel.Rules::default(),
+      output=Ansi,
+      hunks,
+    ) {
     for line in hunk_lines {
       // Strip ANSI escapes so the snapshot is readable.
       lines.push(@bstr.to_string(@ansi_text.strip(line)))
@@ -286,16 +291,18 @@ test "build_side_by_side renders gutter on both panes and shrinks panes" {
       next~,
     ),
   )
-  let render_with = (annotation_gutter : @kernel.AnnotationGutter?) => gutter_pairs(
-    @kernel.build_side_by_side(
-      annotation_gutter?,
-      width_override=60,
-      rules=gutter_strip_rules(),
-      wrap_or_truncate=Neither,
-      output=Ascii,
-      hunks,
-    ),
-  )
+  let render_with = (annotation_gutter : @kernel.AnnotationGutter?) => {
+    gutter_pairs(
+      @kernel.build_side_by_side(
+        annotation_gutter?,
+        width_override=60,
+        rules=gutter_strip_rules(),
+        wrap_or_truncate=Neither,
+        output=Ascii,
+        hunks,
+      ),
+    )
+  }
   let lines = []
   lines.push("without gutter:")
   lines.append(render_with(None))

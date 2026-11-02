@@ -3,7 +3,7 @@
 /// `(first, last, width)` ranges of every code point whose width is not 1.
 /// Negative hints from uucp (control characters) are clamped to 0, as
 /// `Text.of_string` does.
-let width_ranges : ReadOnlyArray[(Int, Int, Int)] = [
+let width_ranges : ReadOnlyArray[(Int32, Int32, Int32)] = [
   (0x0, 0x1F, 0),
   (0x7F, 0x9F, 0),
   (0x300, 0x36F, 0),
@@ -488,7 +488,7 @@ let width_ranges : ReadOnlyArray[(Int, Int, Int)] = [
 
 ///|
 /// The number of terminal columns taken by `c`.
-pub fn char_width(c : Char) -> Int {
+pub fn char_width(c : Char) -> Int32 {
   let code = c.to_int()
   let mut lo = 0
   let mut hi = width_ranges.length()

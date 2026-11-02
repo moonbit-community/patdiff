@@ -61,9 +61,11 @@ fn first_line(text : Bytes) -> Bytes {
 pub fn should_keep_whitespace(prev~ : DiffInput, next~ : DiffInput) -> Bool {
   [prev, next]
   .iter()
-  .any(input => looks_like_python_filename(input.name) ||
+  .any(input => {
+    looks_like_python_filename(input.name) ||
     looks_like_python_first_line(first_line(input.text)) ||
-    looks_like_fsharp_filename(input.name))
+    looks_like_fsharp_filename(input.name)
+  })
 }
 
 ///|

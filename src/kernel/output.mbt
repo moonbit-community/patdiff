@@ -18,7 +18,7 @@ pub(all) struct Platform {
   /// Modification time of a file in seconds since the epoch, for HTML headers.
   mtime : (FileName) -> Double?
   /// Width of the terminal, when known.
-  console_width : () -> Int?
+  console_width : () -> Int32?
   /// Tests render to the full console width. Otherwise a column is reserved,
   /// because diffs are often printed indented by one.
   am_running_test : Bool
@@ -49,7 +49,8 @@ fn apply_rule(
 
 ///|
 fn ansi_rule_apply(text : Bytes, rule~ : Rule, refined~ : Bool) -> Bytes {
-  let only_whitespace = !text.is_empty() && @bstr.for_all(text, @bstr.is_whitespace)
+  let only_whitespace = !text.is_empty() &&
+    @bstr.for_all(text, @bstr.is_whitespace)
   let text_style : Array[@ansi_text.Attr] = if rule.styles.is_empty() {
     []
   } else if refined {
@@ -78,20 +79,28 @@ fn ansi_print(
   let (prev_file, next_file) = file_names
   if print_global_header {
     print(
-      ansi_rule_apply(prev_file.display_name(), rule=rules.header_prev, refined=false),
+      ansi_rule_apply(
+        prev_file.display_name(),
+        rule=rules.header_prev,
+        refined=false,
+      ),
     )
     print(
-      ansi_rule_apply(next_file.display_name(), rule=rules.header_next, refined=false),
+      ansi_rule_apply(
+        next_file.display_name(),
+        rule=rules.header_next,
+        refined=false,
+      ),
     )
   }
   iter(
-    f_hunk_break=hunk => print(
-      location_style.sprint(
-        hunk,
-        prev_filename=prev_file.display_name(),
-        rule=text => ansi_rule_apply(text, rule=rules.hunk, refined=false),
-      ),
-    ),
+    f_hunk_break=hunk => {
+      print(
+        location_style.sprint(hunk, prev_filename=prev_file.display_name(), rule=text => {
+          ansi_rule_apply(text, rule=rules.hunk, refined=false)
+        }),
+      )
+    },
     f_line=print,
     hunks,
   )
@@ -117,20 +126,23 @@ fn html_string_of_color(color : @ansi_text.Color) -> String {
     Bright(Magenta) => "#FF00FF"
     Bright(Cyan) => "#00FFFF"
     Bright(White) => "#FFFFFF"
-    Rgb6({ r, g, b }) => {
+    Rgb6({ r, g, b, }) => {
       let scaled = x => x * 255 / 5
       "rgb(\{scaled(r)},\{scaled(g)},\{scaled(b)})"
     }
-    Gray24({ level }) => {
+    Gray24({ level, }) => {
       let scaled = level * 255 / 23
       "rgb(\{scaled},\{scaled},\{scaled})"
     }
-    Rgb256({ r, g, b }) => "rgb(\{r},\{g},\{b})"
+    Rgb256({ r, g, b, }) => "rgb(\{r},\{g},\{b})"
   }
 }
 
 ///|
-fn html_style_apply(text : Bytes, styles~ : ArrayView[@ansi_text.Attr]) -> Bytes {
+fn html_style_apply(
+  text : Bytes,
+  styles~ : ArrayView[@ansi_text.Attr],
+) -> Bytes {
   let start_tags = []
   let end_tags = []
   let tag = (start : String, end : String) => {
@@ -140,9 +152,13 @@ fn html_style_apply(text : Bytes, styles~ : ArrayView[@ansi_text.Attr]) -> Bytes
   for style in styles {
     match style {
       Bold => tag("<span style=\"font-weight:bold\">", "</span>")
-      Fg(c) => tag("<span style=\"color:\{html_string_of_color(c)}\">", "</span>")
+      Fg(c) =>
+        tag("<span style=\"color:\{html_string_of_color(c)}\">", "</span>")
       Bg(c) =>
-        tag("<span style=\"background-color:\{html_string_of_color(c)}\">", "</span>")
+        tag(
+          "<span style=\"background-color:\{html_string_of_color(c)}\">",
+          "</span>",
+        )
       Underline | Italic => tag("<u>", "</u>")
       Blink => tag("<span style=\"text-decoration:blink\">", "</span>")
       Hide => tag("<!-- ", " -->")
@@ -208,10 +224,9 @@ pub fn time_to_string_utc(seconds : Double) -> String {
   let day = doy - (153L * mp + 2L) / 5L + 1L
   let month = if mp < 10L { mp + 3L } else { mp - 9L }
   let year = yoe + era * 400L + (if month <= 2L { 1L } else { 0L })
-  let pad = (n : Int64, width : Int) => n
-    .to_string()
-    .pad_start(width, '0')
-    .to_string()
+  let pad = (n : Int64, width : Int32) => {
+    n.to_string().pad_start(width, '0').to_string()
+  }
   let second_of_day = micros_of_day / 1000000L
   let date = "\{pad(year, 4)}-\{pad(month, 2)}-\{pad(day, 2)}"
   let time = "\{pad(second_of_day / 3600L, 2)}:\{pad(second_of_day / 60L % 60L, 2)}:\{pad(second_of_day % 60L, 2)}"
@@ -245,11 +260,9 @@ fn html_print(
   }
   for hunk in hunks {
     print(
-      location_style.sprint(
-        hunk,
-        prev_filename=prev_file.display_name(),
-        rule=text => html_rule_apply(text, rule=rules.hunk, refined=false),
-      ),
+      location_style.sprint(hunk, prev_filename=prev_file.display_name(), rule=text => {
+        html_rule_apply(text, rule=rules.hunk, refined=false)
+      }),
     )
     for range in hunk.ranges {
       match range {
@@ -282,7 +295,14 @@ fn print_output(
 ) -> Unit {
   match output {
     Ansi =>
-      ansi_print(print_global_header~, file_names~, rules~, print~, location_style~, hunks)
+      ansi_print(
+        print_global_header~,
+        file_names~,
+        rules~,
+        print~,
+        location_style~,
+        hunks,
+      )
     Ascii =>
       ansi_print(
         print_global_header~,

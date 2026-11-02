@@ -49,7 +49,11 @@ test "v1 html and unrefined propagate" {
 
 ///|
 test "v2 output field flows into both output and unrefined" {
-  let check = fn(text : String, output : @kernel.Output, unrefined : Bool) raise {
+  let check = fn(
+    text : String,
+    output : @kernel.Output,
+    unrefined : Bool,
+  ) raise {
     let config = parse_config(text)
     @test.assert_eq(config.output == output, true)
     @test.assert_eq(config.unrefined, unrefined)

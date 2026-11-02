@@ -44,11 +44,11 @@ fn escaped(x : Bytes) -> String {
     } else if c == b'\\' {
       buf.write_string("\\\\")
     } else if n >= 32 && n < 127 {
-      buf.write_char(Int::unsafe_to_char(n))
+      buf.write_char(Int32::unsafe_to_char(n))
     } else {
       buf.write_string("\\")
       buf.write_string((n / 100).to_string())
-      buf.write_string(((n / 10) % 10).to_string())
+      buf.write_string((n / 10 % 10).to_string())
       buf.write_string((n % 10).to_string())
     }
   }
@@ -66,7 +66,7 @@ struct Out {
 
 ///|
 fn Out::new() -> Out {
-  { buf: StringBuilder() }
+  { buf: StringBuilder(), }
 }
 
 ///|
@@ -119,12 +119,17 @@ fn normalize_expect(s : String) -> String {
 
 ///|
 /// Like `[%expect {| ... |}]`: compare everything printed since the last check.
+#callsite(autofill(loc))
 fn Out::check(
   self : Out,
   expected : Array[String],
-  loc? : SourceLoc = _,
+  loc~ : SourceLoc,
 ) -> Unit raise {
   let actual = self.buf.to_string()
   self.buf.reset()
-  @test.assert_eq(normalize_expect(actual), normalize_expect(expected.join("\n")), loc~)
+  @test.assert_eq(
+    normalize_expect(actual),
+    normalize_expect(expected.join("\n")),
+    loc~,
+  )
 }

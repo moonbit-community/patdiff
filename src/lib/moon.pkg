@@ -9,7 +9,7 @@ import {
 warnings = "-79"
 
 options(
-  targets: {
-    "compare_core.mbt": [ "native" ],
-  },
+  targets: { "compare_core.mbt": [ "native" ] },
 )
+
+supported_targets = "+native"

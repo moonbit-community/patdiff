@@ -6,8 +6,8 @@
 
 ///|
 priv struct Partition {
-  xmid : Int
-  ymid : Int
+  xmid : Int32
+  ymid : Int32
   lo_minimal : Bool
   hi_minimal : Bool
 }
@@ -15,24 +15,24 @@ priv struct Partition {
 ///|
 priv struct PlainDiff {
   // Equal ids mean equal elements; only elements present in both inputs appear.
-  x : FixedArray[Int]
-  y : FixedArray[Int]
-  fd : FixedArray[Int]
-  bd : FixedArray[Int]
-  sh : Int
-  too_expensive : Int
+  x : FixedArray[Int32]
+  y : FixedArray[Int32]
+  fd : FixedArray[Int32]
+  bd : FixedArray[Int32]
+  sh : Int32
+  too_expensive : Int32
 }
 
 ///|
 fn PlainDiff::diag(
   self : PlainDiff,
-  xoff : Int,
-  xlim : Int,
-  yoff : Int,
-  ylim : Int,
+  xoff : Int32,
+  xlim : Int32,
+  yoff : Int32,
+  ylim : Int32,
   find_minimal : Bool,
 ) -> Partition {
-  let { x: xv, y: yv, fd, bd, sh, too_expensive } = self
+  let { x: xv, y: yv, fd, bd, sh, too_expensive, } = self
   let max_value = 2147483647
   let dmin = xoff - ylim
   let dmax = xlim - yoff
@@ -72,7 +72,7 @@ fn PlainDiff::diag(
       }
       fd[sh + d] = x
       if odd && bmin <= d && d <= bmax && bd[sh + d] <= fd[sh + d] {
-        return { xmid: x, ymid: y, lo_minimal: true, hi_minimal: true }
+        return { xmid: x, ymid: y, lo_minimal: true, hi_minimal: true, }
       }
       d -= 2
     }
@@ -101,7 +101,7 @@ fn PlainDiff::diag(
       }
       bd[sh + d] = x
       if !odd && fmin <= d && d <= fmax && bd[sh + d] <= fd[sh + d] {
-        return { xmid: x, ymid: y, lo_minimal: true, hi_minimal: true }
+        return { xmid: x, ymid: y, lo_minimal: true, hi_minimal: true, }
       }
       d -= 2
     }
@@ -166,13 +166,13 @@ fn PlainDiff::diag(
 /// sequences `x`, `y` back to positions in the originals.
 fn PlainDiff::compare_seq(
   self : PlainDiff,
-  xoff : Int,
-  xlim : Int,
-  yoff : Int,
-  ylim : Int,
+  xoff : Int32,
+  xlim : Int32,
+  yoff : Int32,
+  ylim : Int32,
   find_minimal : Bool,
-  ai : FixedArray[Int],
-  bi : FixedArray[Int],
+  ai : FixedArray[Int32],
+  bi : FixedArray[Int32],
   chng1 : FixedArray[Bool],
   chng2 : FixedArray[Bool],
 ) -> Unit {
@@ -197,7 +197,7 @@ fn PlainDiff::compare_seq(
       chng1[ai[x]] = true
     }
   } else {
-    let { xmid, ymid, lo_minimal, hi_minimal } = self.diag(
+    let { xmid, ymid, lo_minimal, hi_minimal, } = self.diag(
       xoff, xlim, yoff, ylim, find_minimal,
     )
     self.compare_seq(xoff, xmid, yoff, ymid, lo_minimal, ai, bi, chng1, chng2)
@@ -211,10 +211,10 @@ fn PlainDiff::compare_seq(
 fn[E : Hash + Eq] plain_diff_iter_matches(
   a : ArrayView[E],
   b : ArrayView[E],
-  f : (Int, Int) -> Unit,
+  f : (Int32, Int32) -> Unit,
 ) -> Unit {
   // Intern every element so the main loop compares ints, not elements.
-  let ids : @hashmap.HashMap[E, Int] = @hashmap.HashMap([])
+  let ids : @hashmap.HashMap[E, Int32] = HashMap([])
   let intern = fn(e) {
     match ids.get(e) {
       Some(id) => id
