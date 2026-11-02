@@ -1,0 +1,12 @@
+import {
+  "moonbit-community/patdiff/internal/bstr",
+  "moonbit-community/patdiff/kernel",
+  "moonbit-community/patdiff/lib",
+  "moonbit-community/patdiff/sys",
+  "moonbitlang/core/env",
+  "moonbitlang/core/string",
+}
+
+options(
+  "is-main": true,
+)

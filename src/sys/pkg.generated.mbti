@@ -1,0 +1,53 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbit-community/patdiff/sys"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn console_width() -> Int32?
+
+pub fn exit(Int32) -> Unit
+
+pub fn flush_stdout() -> Unit
+
+pub fn print_stderr(Bytes) -> Unit
+
+pub fn print_stdout(Bytes) -> Unit
+
+pub fn read_dir(Bytes) -> Array[Bytes] raise SysError
+
+pub fn read_file(Bytes) -> Bytes raise SysError
+
+pub fn read_stdin() -> Bytes raise SysError
+
+pub fn stat(Bytes) -> Stat? raise SysError
+
+pub fn temp_file(Bytes, Bytes, Bytes, Bytes) -> Bytes raise SysError
+
+pub fn unlink(Bytes) -> Unit
+
+pub fn write_file(Bytes, Bytes) -> Unit raise SysError
+
+// Errors
+pub(all) suberror SysError {
+  SysError(String)
+}
+pub impl Show for SysError
+
+// Types and methods
+pub(all) enum FileKind {
+  Regular
+  Directory
+  OtherKind
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Stat {
+  kind : FileKind
+  mtime : Double
+}
+
+// Type aliases
+
+// Traits

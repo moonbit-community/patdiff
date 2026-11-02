@@ -4,6 +4,7 @@ package "moonbit-community/patdiff/kernel"
 import {
   "moonbit-community/patdiff/ansi_text",
   "moonbit-community/patdiff/patience_diff",
+  "moonbit-community/patdiff/sexp",
   "moonbitlang/core/debug",
 }
 
@@ -30,6 +31,10 @@ pub fn build_unified(annotation_gutter? : AnnotationGutter, rules~ : Rules, outp
 
 pub fn compare_lines(Configuration, prev~ : ArrayView[Bytes], next~ : ArrayView[Bytes]) -> ComparisonResult
 
+pub fn dark_bg_configuration() -> Configuration
+
+pub fn default_config_string() -> Bytes
+
 pub fn diff(context~ : Int32, line_big_enough~ : Int32, keep_ws~ : Bool, find_moves~ : Bool, prev~ : ArrayView[Bytes], next~ : ArrayView[Bytes]) -> Array[@patience_diff.Hunk[Bytes]]
 
 pub fn diff_strings(print_global_header? : Bool, platform? : Platform, Configuration, prev~ : DiffInput, next~ : DiffInput) -> Bytes?
@@ -53,6 +58,8 @@ pub fn iter(f_hunk_break~ : (@patience_diff.Hunk[Bytes]) -> Unit, f_line~ : (Byt
 pub fn[A] iter_sides(f_hunk_break~ : (@patience_diff.Hunk[A]) -> Unit, f_line~ : (GutterSide) -> Unit, ArrayView[@patience_diff.Hunk[A]]) -> Unit
 
 pub fn iter_with_line_info(f_hunk_break~ : (@patience_diff.Hunk[Bytes]) -> Unit, f_line~ : (GutterSide, Bytes) -> Unit, ArrayView[@patience_diff.Hunk[Bytes]]) -> Unit
+
+pub fn light_bg_configuration() -> Configuration
 
 pub fn lines_of_contents(Bytes) -> (Array[Bytes], Bool)
 
@@ -153,6 +160,38 @@ pub(all) struct DiffInput {
 } derive(Eq, @debug.Debug)
 pub fn DiffInput::of_string(StringView, StringView) -> Self
 
+pub(all) struct DiskAffix {
+  text : Bytes?
+  style : Array[@ansi_text.Attr]?
+} derive(Eq, @debug.Debug)
+
+pub(all) struct DiskLineRule {
+  prefix : DiskAffix?
+  suffix : DiskAffix?
+  style : Array[@ansi_text.Attr]?
+  word_same : Array[@ansi_text.Attr]?
+} derive(Eq, @debug.Debug)
+
+pub(all) enum DiskOutput {
+  OAscii
+  OHtml
+  OAnsi
+  OUnrefinedAnsi
+  OUnrefinedHtml
+  OSideBySide(WrapOrTruncate)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct DiskRule {
+  prefix : DiskAffix?
+  suffix : DiskAffix?
+  style : Array[@ansi_text.Attr]?
+} derive(Eq, @debug.Debug)
+
+pub(all) enum DiskVersion {
+  Current
+  Outdated
+}
+
 pub(all) enum FileName {
   Real(real_name~ : Bytes, alt_name~ : Bytes?)
   Fake(Bytes)
@@ -199,6 +238,48 @@ pub(all) enum LocationStyle {
 pub fn LocationStyle::all() -> Array[Self]
 pub fn LocationStyle::of_string(String) -> Self?
 pub fn LocationStyle::to_string(Self) -> String
+
+pub(all) struct OnDisk {
+  dont_produce_unified_lines : Bool?
+  dont_overwrite_word_old_word_new : Bool?
+  config_path : Bytes?
+  context : Int32?
+  line_big_enough : Int32?
+  word_big_enough : Int32?
+  keep_whitespace : Bool?
+  find_moves : Bool?
+  split_long_lines : Bool?
+  interleave : Bool?
+  assume_text : Bool?
+  quiet : Bool?
+  shallow : Bool?
+  double_check : Bool?
+  mask_uniques : Bool?
+  output : DiskOutput
+  alt_old : Bytes?
+  alt_new : Bytes?
+  header_old : DiskRule?
+  header_new : DiskRule?
+  hunk : DiskRule?
+  line_same : DiskLineRule?
+  line_old : DiskLineRule?
+  line_new : DiskLineRule?
+  line_unified : DiskLineRule?
+  line_from_old : DiskLineRule?
+  line_to_new : DiskLineRule?
+  line_removed_in_move : DiskLineRule?
+  line_added_in_move : DiskLineRule?
+  line_unified_in_move : DiskLineRule?
+  word_old : DiskRule?
+  word_new : DiskRule?
+  location_style : LocationStyle
+  warn_if_no_trailing_newline_in_both : Bool
+  width_override : Int32?
+} derive(Eq, @debug.Debug)
+pub fn OnDisk::of_sexp(@sexp.Sexp) -> Self raise @sexp.SexpError
+pub fn OnDisk::of_sexp_versioned(@sexp.Sexp) -> (Self, DiskVersion) raise @sexp.SexpError
+pub fn OnDisk::to_configuration(Self) -> Configuration
+pub fn OnDisk::to_sexp(Self) -> @sexp.Sexp
 
 pub(all) enum Output {
   Ansi

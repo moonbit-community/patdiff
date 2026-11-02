@@ -13,3 +13,5 @@ keywords = [ "diff", "patience", "ansi" ]
 description = "File diff using the patience diff algorithm: a MoonBit port of Jane Street's patdiff"
 
 source = "src"
+
+options("preferred-target": "native")

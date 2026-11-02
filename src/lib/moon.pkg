@@ -1,0 +1,15 @@
+import {
+  "moonbit-community/patdiff/internal/bstr",
+  "moonbit-community/patdiff/kernel",
+  "moonbit-community/patdiff/sexp",
+  "moonbit-community/patdiff/sys",
+  "moonbitlang/core/env",
+}
+
+warnings = "-79"
+
+options(
+  targets: {
+    "compare_core.mbt": [ "native" ],
+  },
+)

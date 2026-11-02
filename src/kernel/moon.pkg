@@ -2,6 +2,7 @@ import {
   "moonbit-community/patdiff/ansi_text",
   "moonbit-community/patdiff/internal/bstr",
   "moonbit-community/patdiff/patience_diff" @pd,
+  "moonbit-community/patdiff/sexp",
   "moonbitlang/core/cmp",
   "moonbitlang/core/double",
   "moonbitlang/core/string",

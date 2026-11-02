@@ -1,0 +1,28 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbit-community/patdiff/sexp"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+
+// Errors
+pub(all) suberror SexpError {
+  SexpError(String)
+}
+pub impl Show for SexpError
+
+// Types and methods
+pub(all) enum Sexp {
+  Atom(Bytes)
+  List(Array[Sexp])
+} derive(Eq, @debug.Debug)
+pub fn Sexp::atom(StringView) -> Self
+pub fn Sexp::parse(Bytes) -> Self raise SexpError
+pub fn Sexp::to_bytes_hum(Self) -> Bytes
+pub fn Sexp::to_bytes_mach(Self) -> Bytes
+
+// Type aliases
+
+// Traits
