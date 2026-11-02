@@ -4,7 +4,7 @@ version = "0.1.0"
 
 readme = "README.md"
 
-repository = "https://github.com/moonbit-community/patdiff.mbt"
+repository = "https://github.com/moonbit-community/patdiff"
 
 license = "MIT"
 
