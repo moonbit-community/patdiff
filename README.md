@@ -14,14 +14,16 @@ The port follows upstream at `v0.18~preview.130.106+341`, together with the
 published Wasm build without installing anything:
 
 ```bash
-moonx moonbit-community/patdiff/cmd/patdiff old.txt new.txt
+moonx moonbit-community/patdiff old.txt new.txt
 ```
 
 To install the native build:
 
 ```bash
-moon install moonbit-community/patdiff/cmd/patdiff
+moon install moonbit-community/patdiff
 ```
+
+Before 0.3.0 the executable was the package `moonbit-community/patdiff/cmd/patdiff`.
 
 Or, from a checkout:
 
@@ -30,7 +32,7 @@ moon build --release
 ```
 
 ```bash
-_build/native/release/build/cmd/patdiff/patdiff.exe old.txt new.txt
+_build/native/release/build/patdiff.exe old.txt new.txt
 ```
 
 As upstream it compares two files or two directories, or reads diff-like text from
@@ -65,7 +67,7 @@ let diff : Bytes = @kernel.patdiff(
 | `sexp` | S-expressions, for configuration files |
 | `sys` | Files, standard streams and the terminal, on `moonbitlang/async` |
 | `lib` | Comparing files and directories, loading configuration |
-| `cmd/patdiff`, `cmd/ansi_text` | The executables |
+| the module root, `cmd/ansi_text` | The executables, `patdiff` and `ansi_text` |
 
 `sys`, `lib` and the executables do I/O through `moonbitlang/async`, so they build
 for native and Wasm (run with `moonrun`), and their I/O functions are `async`.

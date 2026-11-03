@@ -44,15 +44,17 @@ def parse(path):
 def make_bin_dir(tmp):
     bin_dir = os.path.join(tmp, ".bin")
     os.mkdir(bin_dir)
-    build = os.path.join(ROOT, f"_build/{TARGET}/release/build/cmd")
-    for name in ["patdiff", "ansi_text"]:
+    build = os.path.join(ROOT, f"_build/{TARGET}/release/build")
+    # patdiff is the module's root package.
+    for name, package_dir in [("patdiff", ""), ("ansi_text", "cmd/ansi_text")]:
+        output = os.path.join(build, package_dir, name)
         if TARGET == "wasm":
             program = os.path.join(bin_dir, name)
             with open(program, "w") as f:
-                f.write(f'#!/bin/sh\nexec moonrun "{os.path.join(build, name, name + ".wasm")}" "$@"\n')
+                f.write(f'#!/bin/sh\nexec moonrun "{output}.wasm" "$@"\n')
             os.chmod(program, os.stat(program).st_mode | stat.S_IEXEC)
         else:
-            os.symlink(os.path.join(build, name, name + ".exe"), os.path.join(bin_dir, name))
+            os.symlink(output + ".exe", os.path.join(bin_dir, name))
     wrapper = os.path.join(ROOT, "scripts/patdiff-git-wrapper")
     if os.path.exists(wrapper):
         shutil.copy(wrapper, os.path.join(bin_dir, "patdiff-git-wrapper"))
